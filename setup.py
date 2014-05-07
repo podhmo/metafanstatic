@@ -15,6 +15,8 @@ except IOError:
 
 install_requires=[
     'setuptools',
+    'requests', 
+    'fanstatic'
     ]
 
 docs_extras = [
@@ -49,7 +51,10 @@ setup(name='metafanstatic',
           },
       tests_require = tests_require,
     test_suite='nose.collector',
-      entry_points = """      """
+      entry_points = """
+      [console_scripts]
+      metafanstatic = metafanstatic.command:main
+      """
       )
 
 
