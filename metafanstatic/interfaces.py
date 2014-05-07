@@ -8,3 +8,8 @@ class IListing(Interface):
 class IDownloading(Interface):
     def download(url):
         pass
+
+class ICreation(Interface):
+    def create(zip_path):
+        pass
+

@@ -16,7 +16,8 @@ except IOError:
 install_requires=[
     'setuptools',
     'requests', 
-    'fanstatic'
+    'fanstatic', 
+    "korpokkur"
     ]
 
 docs_extras = [
@@ -54,6 +55,8 @@ setup(name='metafanstatic',
       entry_points = """
       [console_scripts]
       metafanstatic = metafanstatic.command:main
+      [korpokkur.scaffold]
+      metafanstatic = metafanstatic.scaffolds:Package
       """
       )
 

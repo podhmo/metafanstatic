@@ -4,6 +4,7 @@ logger = logging.getLogger(__name__)
 import argparse
 import sys
 from configless import Configurator
+from korpokkur.command import get_app as get_korpokkur_app
 
 def get_app(setting={
         "listing.search.url": "https://bower.herokuapp.com/packages/search/", 
@@ -23,6 +24,10 @@ def listing(args):
 def downloading(args):
     app = get_app()
     print(app.activate_plugin("downloading").download(args.url))
+
+def creation(args):
+    app = get_app()
+    scaffold_app = get_korpokkur_app()
 
 def main(sys_args=sys.argv):
     parser = argparse.ArgumentParser()
