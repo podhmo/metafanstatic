@@ -4,3 +4,7 @@ from zope.interface import Interface
 class IListing(Interface):
     def iterate_repository(word):
         pass
+
+class IDownloading(Interface):
+    def download(url):
+        pass
