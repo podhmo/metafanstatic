@@ -51,7 +51,7 @@ setup(name='metafanstatic',
           'docs':docs_extras,
           },
       tests_require = tests_require,
-    test_suite='nose.collector',
+      test_suite='nose.collector',
       entry_points = """
       [console_scripts]
       metafanstatic = metafanstatic.command:main

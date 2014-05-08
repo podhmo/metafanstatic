@@ -2,7 +2,10 @@
 from zope.interface import Interface
 
 class IListing(Interface):
-    def iterate_repository(word):
+    def iterate_search(word):
+        pass
+
+    def iterate_lookup(word):
         pass
 
 class IDownloading(Interface):
@@ -13,3 +16,9 @@ class ICreation(Interface):
     def create(zip_path):
         pass
 
+class IExtracting(Interface):
+    def extract(zip_path):
+        pass
+
+class IInformation(Interface):
+    pass
