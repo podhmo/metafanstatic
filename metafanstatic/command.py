@@ -36,14 +36,20 @@ def lookup(args):
 
 def versions(args):
     app = get_app()
-    for val in app.activate_plugin("listing").iterate_versions(args.word):
-        ref = val["ref"]
-        print(ref.replace("refs/tags/", ""))
-
+    if args.describe == "json":
+        for _, val in app.activate_plugin("listing").iterate_versions(args.word):
+            print(val)
+    elif args.describe == "version":
+        for _, val in app.activate_plugin("listing").iterate_versions(args.word):
+            print(val["ref"].replace("refs/tags/", ""))
+    elif args.describe == "zip":
+        from .downloading import repository_url_to_download_zip_url
+        for url, val in app.activate_plugin("listing").iterate_versions(args.word):
+            print(repository_url_to_download_zip_url(url, val["ref"].replace("refs/tags/", "")))
 
 def downloading(args):
     app = get_app()
-    print(app.activate_plugin("downloading").download(args.url))
+    print(app.activate_plugin("downloading").download(args.url, args.version))
 
 def extracting(args):
     app = get_app()
@@ -103,13 +109,15 @@ def main(sys_args=sys.argv):
 
     versions_parser = sub_parsers.add_parser("versions")
     versions_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+    versions_parser.add_argument("--describe", choices=["version", "zip", "json"])
     versions_parser.add_argument("word")
-    versions_parser.set_defaults(func=versions)
+    versions_parser.set_defaults(func=versions, describe="version")
 
     download_parser = sub_parsers.add_parser("download")
     download_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+    download_parser.add_argument("--version")
     download_parser.add_argument("url")
-    download_parser.set_defaults(func=downloading)
+    download_parser.set_defaults(func=downloading, version=None)
 
     extract_parser = sub_parsers.add_parser("extract")
     extract_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])

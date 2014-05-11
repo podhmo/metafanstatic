@@ -12,7 +12,7 @@ class IListing(Interface):
         pass
 
 class IDownloading(Interface):
-    def download(url):
+    def download(url, version=None):
         pass
 
 class ICreation(Interface):

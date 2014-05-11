@@ -1,4 +1,7 @@
 # -*- coding:utf-8 -*-
+import logging
+logger = logging.getLogger(__name__)
+
 from configless.interfaces import IPlugin
 from .interfaces import IDownloading
 from zope.interface import implementer
@@ -28,11 +31,25 @@ class _FileStreamAdapter(object):
 
 
 github_rx = re.compile(r"git://github\.com/(\S+)\.git$")
-def repository_url_to_download_zip_url(url):
+_zip_url_cache = {}
+def repository_url_to_download_zip_url(url, version=None):
+    global _zip_url_cache
+    k = (url, version)
+    if k in _zip_url_cache:
+        return _zip_url_cache[k]
+
     m = github_rx.search(url)
+    url = None
     if m:
-        return "https://github.com/{name}/archive/master.zip".format(name=m.group(1))
-    raise NotImplementedError(url)
+        if version is None:
+            url =  "https://github.com/{name}/archive/master.zip".format(name=m.group(1))
+        else:
+            url = "https://github.com/{name}/archive/{version}.zip".format(name=m.group(1), version=version)
+
+    if url is None:
+        raise NotImplementedError(url)
+    _zip_url_cache[k] = url
+    return url
 
 @implementer(IDownloading, IPlugin)
 class DownloadingFromRepositoryURI(object):
@@ -49,11 +66,12 @@ class DownloadingFromRepositoryURI(object):
         self.cache_dir = dirpath
         self.to_download_url = to_download_url
 
-    def download(self, url):
-        zip_url = self.to_download_url(url)
+    def download(self, url, version=None):
+        zip_url = self.to_download_url(url, version)
         try:
             return self.cache[zip_url]
         except KeyError:
+            logger.debug("download: %s", zip_url)
             return self.cache.store_stream(zip_url, _FileStreamAdapter(url, requests.get(zip_url, stream=True)))
 
 def includeme(config):

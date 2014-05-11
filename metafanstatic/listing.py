@@ -1,4 +1,7 @@
 # -*- coding:utf-8 -*-
+import logging
+logger = logging.getLogger(__name__)
+
 from configless.interfaces import IPlugin
 from .interfaces import IListing
 from zope.interface import implementer
@@ -28,18 +31,22 @@ class Listing(object):
 
     def iterate_lookup(self, word):
         url = os.path.join(self.lookup_url, word)
+        logger.debug("lookup: %s", url)
         yield requests.get(url).json()
 
     def iterate_search(self, word):
         url = os.path.join(self.search_url, word)
+        logger.debug("search: %s", url)
         for val in requests.get(url).json():
             yield val
 
     def iterate_versions(self, word):
-        url = next(self.iterate_lookup(word))["url"]
+        data = next(self.iterate_lookup(word))
+        url = data["url"]
         tag_json_url = repository_url_to_tag_json_url(url)
+        logger.debug("versions: %s", tag_json_url)
         for val in requests.get(tag_json_url).json():
-            yield val
+            yield data["url"], val
 
 def includeme(config):
     config.add_plugin("listing", Listing)
