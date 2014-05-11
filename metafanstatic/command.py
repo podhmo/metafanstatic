@@ -75,6 +75,7 @@ def creation(args):
     detector = app.activate_plugin("detector")
     walker = app.activate_plugin("walker", input, detector, reproduction)
     dst = app.registry.setting["creation.work.dirpath"]
+    input.update({"Undefined":"`Undefined"})
     scaffold.walk(walker, dst, overwrite=True)
     print(os.path.join(dst, information.package))
 

@@ -18,3 +18,8 @@ class Package(object):
     __dro__ = ["korpokkur.scaffolds.pygitignore:Package"] #todo:validation
     template_engine = "mako"
 
+"""
+memo:
+
+- version
+"""

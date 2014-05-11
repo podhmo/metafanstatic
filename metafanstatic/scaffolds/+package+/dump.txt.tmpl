@@ -1,1 +1,2 @@
-${ {k:v for k,v in context._data.input.cache.items()} }
+<%from metafanstatic import viewhelpers as vh%>
+${vh.dict_print(context._data.input.cache)}
