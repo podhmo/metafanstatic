@@ -5,6 +5,8 @@ import os.path
 import logging
 logger = logging.getLogger(__name__)
 
+from .compat import FileNotFoundError
+
 junk_prefix = re.compile(r'^/\./|^\./')
 js_sufix = re.compile(r'\.js$')
 
@@ -18,6 +20,12 @@ class JSResourceIterator(object):
         if filename:
             dst = os.path.join(self.dst, filename)
             logger.debug("copy file: %s -> %s", filepath, dst)
+        try:
+            shutil.copy2(filepath, dst)
+        except FileNotFoundError as e:
+            if os.path.exists(os.path.dirname(dst)):
+                raise e
+            os.makedirs(os.path.dirname(dst))
             shutil.copy2(filepath, dst)
 
     def __iter__(self):
@@ -38,13 +46,13 @@ class JSResourceIterator(object):
 
 def flatten_filename(root, js_file):
     flattend = js_file.replace(root, "")
-    return junk_prefix.sub("", flattend)
+    return junk_prefix.sub("", flattend).lstrip("/")
 
 def minified_name(name):
     return js_sufix.sub(".min.js", name)
 
 def namenize(filename):
-    return filename.replace(".", "_")
+    return os.path.basename(filename).replace(".", "_")
 
 import pprint
 
