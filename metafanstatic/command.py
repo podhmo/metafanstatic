@@ -24,18 +24,29 @@ def get_app(setting={
     config.include("metafanstatic.information")
     return config #xxx:
 
+def setup_logging(app, args):
+    if args.logging is None:
+        return
+    else:
+        import logging
+        level = getattr(logging, args.logging)
+        logging.basicConfig(level=level)
+
 def listing(args):
     app = get_app()
+    setup_logging(app, args)
     for val in app.activate_plugin("listing").iterate_search(args.word):
         print('{val[name]}: {val[url]}'.format(val=val))
 
 def lookup(args):
     app = get_app()
+    setup_logging(app, args)
     for val in app.activate_plugin("listing").iterate_lookup(args.word):
         print('{val[name]}: {val[url]}'.format(val=val))
 
 def versions(args):
     app = get_app()
+    setup_logging(app, args)
     if args.describe == "json":
         for _, val in app.activate_plugin("listing").iterate_versions(args.word):
             print(val)
@@ -49,16 +60,19 @@ def versions(args):
 
 def downloading(args):
     app = get_app()
+    setup_logging(app, args)
     print(app.activate_plugin("downloading").download(args.url, args.version))
 
 def extracting(args):
     app = get_app()
-    zipppath = app.activate_plugin("downloading").download(args.url)
+    setup_logging(app, args)
+    zipppath = app.activate_plugin("downloading").download(args.url, args.version)
     print(app.activate_plugin("extracting").extract(zipppath))
 
 def information(args):
     app = get_app()
-    zipppath = app.activate_plugin("downloading").download(args.url)
+    setup_logging(app, args)
+    zipppath = app.activate_plugin("downloading").download(args.url, args.version)
     bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
     information = app.activate_plugin("information", bower_json_path)
     print(information.description)
@@ -67,7 +81,8 @@ def information(args):
 
 def creation(args):
     app = get_app()
-    zipppath = app.activate_plugin("downloading").download(args.url)
+    setup_logging(app, args)
+    zipppath = app.activate_plugin("downloading").download(args.url, args.version)
     bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
     information = app.activate_plugin("information", bower_json_path)
 
@@ -121,17 +136,20 @@ def main(sys_args=sys.argv):
 
     extract_parser = sub_parsers.add_parser("extract")
     extract_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+    extract_parser.add_argument("--version")
     extract_parser.add_argument("url")
     extract_parser.set_defaults(func=extracting)
 
     information_parser = sub_parsers.add_parser("information")
     information_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+    information_parser.add_argument("--version")
     information_parser.add_argument("url")
     information_parser.add_argument("--description", action="store_true")
     information_parser.set_defaults(func=information)
 
     create_parser = sub_parsers.add_parser("create")
     create_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+    create_parser.add_argument("--version")
     create_parser.add_argument("url")
     create_parser.set_defaults(func=creation)
 
