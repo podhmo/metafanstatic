@@ -8,6 +8,9 @@ class IListing(Interface):
     def iterate_lookup(word):
         pass
 
+    def iterate_versions(word):
+        pass
+
 class IDownloading(Interface):
     def download(url):
         pass

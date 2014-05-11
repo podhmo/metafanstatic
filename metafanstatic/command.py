@@ -34,6 +34,13 @@ def lookup(args):
     for val in app.activate_plugin("listing").iterate_lookup(args.word):
         print('{val[name]}: {val[url]}'.format(val=val))
 
+def versions(args):
+    app = get_app()
+    for val in app.activate_plugin("listing").iterate_versions(args.word):
+        ref = val["ref"]
+        print(ref.replace("refs/tags/", ""))
+
+
 def downloading(args):
     app = get_app()
     print(app.activate_plugin("downloading").download(args.url))
@@ -93,6 +100,11 @@ def main(sys_args=sys.argv):
     lookup_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     lookup_parser.add_argument("word")
     lookup_parser.set_defaults(func=lookup)
+
+    versions_parser = sub_parsers.add_parser("versions")
+    versions_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+    versions_parser.add_argument("word")
+    versions_parser.set_defaults(func=versions)
 
     download_parser = sub_parsers.add_parser("download")
     download_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
