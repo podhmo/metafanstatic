@@ -13,16 +13,7 @@ class CacheItemNotFound(Exception):
     pass
 
 
-class JSONFileCache(object):
-
-    def __init__(self, storepath, cachepath, cache, check=True, overwrite=True):
-        self.storepath = storepath
-        self.cachepath = cachepath
-        self.cache = cache
-
-        self.filecheck = check
-        self.overwrite = overwrite
-
+class JSONCacheBase(object):
     @classmethod
     def load(cls, storepath, cachepath, check=True):
         if not os.path.exists(storepath):
@@ -40,6 +31,34 @@ class JSONFileCache(object):
             os.makedirs(dirpath)
         with open(self.cachepath, "w") as wf:
             wf.write(json.dumps(self.cache))
+
+
+class JSONDictCache(JSONCacheBase):
+    def __init__(self, storepath, cachepath, cache, check=True, overwrite=True):
+        self.storepath = storepath
+        self.cachepath = cachepath
+        self.cache = cache
+
+        self.filecheck = check
+        self.overwrite = overwrite
+
+    def store(self, k, val):
+        self.cache[k] = val
+        self.save()
+        return val
+
+    def __getitem__(self, k):
+        return self.cache[k]
+
+
+class JSONFileCache(JSONCacheBase):
+    def __init__(self, storepath, cachepath, cache, check=True, overwrite=True):
+        self.storepath = storepath
+        self.cachepath = cachepath
+        self.cache = cache
+
+        self.filecheck = check
+        self.overwrite = overwrite
 
     def store_stream(self, k, filestream):
         path = os.path.join(self.storepath, filestream.name)

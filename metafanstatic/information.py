@@ -2,10 +2,9 @@
 import logging
 import os.path
 logger = logging.getLogger(__name__)
-import json
 from zope.interface import implementer
 from metafanstatic.interfaces import IInformation
-
+from .utils import safe_json_load
 # see: metafanstatic.interfaces:IInformation
 
 
@@ -19,8 +18,7 @@ class Information(object):
     def __init__(self, bower_file_path):
         self.bower_file_path = bower_file_path
         self.bower_dir_path = os.path.dirname(self.bower_file_path)
-        with open(bower_file_path, "r") as rf:
-            self.data = json.load(rf)
+        self.data = safe_json_load(bower_file_path)
 
     @property
     def package(self):

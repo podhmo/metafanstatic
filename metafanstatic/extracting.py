@@ -4,8 +4,8 @@ from .interfaces import IExtracting
 from zope.interface import implementer
 import requests
 import os.path
-from .cache import JSONFileCache
 import zipfile
+from .cache import JSONFileCache
 
 
 @implementer(IExtracting, IPlugin)
