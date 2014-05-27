@@ -80,6 +80,8 @@ def get_url_and_version(app, word, version):
         return url, version
     logger.info("version is not specified. finding latest version of %s", word)
     versions = app.activate_plugin("listing").iterate_versions(word, url=url)
+    if not versions:
+        sys.exit(0)  # xxx:
     version = next(reversed(list(versions)))[1]["ref"].replace("refs/tags/", "")
     logger.info("latest version is %s", version)
     return url, version
@@ -104,12 +106,13 @@ def information(args):
     app = get_app()
     setup_logging(app, args)
     url, version = get_url_and_version(app, args.word, args.version)
-    zipppath = app.activate_plugin("downloading").download(url, version)
-    bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
-    information = app.activate_plugin("information", bower_json_path)
-    print(information.description)
-    print(information.dependencies)
-    print(information.exists_info())
+    print(url, version)
+    # zipppath = app.activate_plugin("downloading").download(url, version)
+    # bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
+    # information = app.activate_plugin("information", bower_json_path)
+    # print(information.description)
+    # print(information.dependencies)
+    # print(information.exists_info())
 
 
 def creation(args):

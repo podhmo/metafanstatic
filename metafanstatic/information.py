@@ -52,6 +52,7 @@ class Information(object):
     def push_data(self, input):
         input.update(self.data)
         input.update(dict(package=self.package,
+                          dependencies=self.data.get("dependencies", []),
                           bower_dir_path=self.bower_dir_path,
                           name=self.data.get("name", "").replace("-", "_"),
                           description=self.description,

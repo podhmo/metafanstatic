@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 from configless.interfaces import IPlugin
 from .interfaces import IDownloading
 from zope.interface import implementer
-import re
+from .urls import get_repository_fullname_from_url
 import requests
 import os.path
 
@@ -32,7 +32,6 @@ class _FileStreamAdapter(object):
         return self.requests_stream.iter_content(chunk_size=self.chunk_size)
 
 
-github_rx = re.compile(r"git://github\.com/(\S+)\.git$")
 _zip_url_cache = {}
 
 
@@ -42,13 +41,13 @@ def repository_url_to_download_zip_url(url, version=None):
     if k in _zip_url_cache:
         return _zip_url_cache[k]
 
-    m = github_rx.search(url)
+    name = get_repository_fullname_from_url(url)
     url = None
-    if m:
+    if name:
         if version is None:
-            url = "https://github.com/{name}/archive/master.zip".format(name=m.group(1))
+            url = "https://github.com/{name}/archive/master.zip".format(name=name)
         else:
-            url = "https://github.com/{name}/archive/{version}.zip".format(name=m.group(1), version=version)
+            url = "https://github.com/{name}/archive/{version}.zip".format(name=name, version=version)
 
     if url is None:
         raise NotImplementedError(url)

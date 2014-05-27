@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-import pyramid
 import logging
 logger = logging.getLogger(__name__)
 
@@ -8,18 +7,16 @@ from .interfaces import IListing
 from zope.interface import implementer
 import requests
 import os
-import re
 import time
 from .utils import reify
 from .cache import JSONDictCache
-
-github_rx = re.compile(r"git://github\.com/(\S+)\.git$")
+from .urls import get_repository_fullname_from_url
 
 
 def repository_url_to_tag_json_url(url):
-    m = github_rx.search(url)
-    if m:
-        return "https://api.github.com/repos/{name}/git/refs/tags".format(name=m.group(1))
+    name = get_repository_fullname_from_url(url)
+    if name:
+        return "https://api.github.com/repos/{name}/git/refs/tags".format(name=name)
     raise NotImplementedError(url)
 
 
@@ -67,9 +64,13 @@ class Listing(object):
         except KeyError:
             url = os.path.join(self.lookup_url, word)
             logger.debug("lookup: %s", url)
-            result = requests.get(url).json()
-            self.url_cache.store(word, (time.time(), result))
-            return [result]
+            try:
+                result = requests.get(url).json()
+                self.url_cache.store(word, (time.time(), result))
+                return [result]
+            except ValueError:
+                logger.info("matched repository not found. word=%s", word)
+                return []
 
     def iterate_search(self, word):
         url = os.path.join(self.search_url, word)
@@ -79,7 +80,10 @@ class Listing(object):
 
     def iterate_versions(self, word, url=None):
         if url is None:
-            data = next(iter(self.iterate_lookup(word)))
+            urls = self.iterate_lookup(word)
+            if not urls:
+                return []
+            data = next(iter(urls))
             url = data["url"]
         try:
             (tm, versions) = self.versions_cache[word]
