@@ -6,9 +6,12 @@ import json
 from zope.interface import implementer
 from metafanstatic.interfaces import IInformation
 
-## see: metafanstatic.interfaces:IInformation
+# see: metafanstatic.interfaces:IInformation
+
+
 @implementer(IInformation)
 class Information(object):
+
     @classmethod
     def create_from_setting(cls, setting, bower_file_path):
         return cls(bower_file_path)
@@ -37,11 +40,11 @@ class Information(object):
 
     @property
     def min_js_path_list(self):
-        return [m[:-3]+".min.js" for m in self.main_js_path_list]
+        return [m[:-3] + ".min.js" for m in self.main_js_path_list]
 
     def exists_info(self):
         return {
-            "main_js_list": {m:os.path.exists(m) for m in self.main_js_path_list}, 
+            "main_js_list": {m: os.path.exists(m) for m in self.main_js_path_list},
         }
 
     @property
@@ -52,9 +55,10 @@ class Information(object):
         input.update(self.data)
         input.update(dict(package=self.package,
                           bower_dir_path=self.bower_dir_path,
-                          description=self.description, 
+                          name=self.data.get("name", "").replace("-", "_"),
+                          description=self.description,
                           main_js_path_list=self.main_js_path_list))
+
 
 def includeme(config):
     config.add_plugin("information", Information)
-

@@ -6,23 +6,25 @@ import os.path
 import sys
 from configless import Configurator
 
+
 def get_app(setting={
-        "entry_points_name": "korpokkur.scaffold", 
-        "listing.search.url": "https://bower.herokuapp.com/packages/search/", 
-        "listing.lookup.url": "https://bower.herokuapp.com/packages/", 
-        "download.cache.dirpath" : "/tmp/metafanstaticcache",
-        "download.cache.filename" : "cache.json", 
-        "extracting.work.dirpath": "/tmp/metafanstaticwork", 
-        "extracting.cache.filename" : "cache.json", 
-        "creation.work.dirpath": "/tmp/metafanstaticbuild", 
-        "creation.cache.filename" : "cache.json", 
+        "entry_points_name": "korpokkur.scaffold",
+        "listing.search.url": "https://bower.herokuapp.com/packages/search/",
+        "listing.lookup.url": "https://bower.herokuapp.com/packages/",
+        "download.cache.dirpath": "/tmp/metafanstaticcache",
+        "download.cache.filename": "cache.json",
+        "extracting.work.dirpath": "/tmp/metafanstaticwork",
+        "extracting.cache.filename": "cache.json",
+        "creation.work.dirpath": "/tmp/metafanstaticbuild",
+        "creation.cache.filename": "cache.json",
 }):
     config = Configurator(setting=setting)
     config.include("metafanstatic.listing")
     config.include("metafanstatic.downloading")
     config.include("metafanstatic.extracting")
     config.include("metafanstatic.information")
-    return config #xxx:
+    return config  # xxx:
+
 
 def setup_logging(app, args):
     if args.logging is None:
@@ -32,17 +34,20 @@ def setup_logging(app, args):
         level = getattr(logging, args.logging)
         logging.basicConfig(level=level)
 
+
 def listing(args):
     app = get_app()
     setup_logging(app, args)
     for val in app.activate_plugin("listing").iterate_search(args.word):
         print('{val[name]}: {val[url]}'.format(val=val))
 
+
 def lookup(args):
     app = get_app()
     setup_logging(app, args)
     for val in app.activate_plugin("listing").iterate_lookup(args.word):
         print('{val[name]}: {val[url]}'.format(val=val))
+
 
 def versions(args):
     app = get_app()
@@ -58,16 +63,19 @@ def versions(args):
         for url, val in app.activate_plugin("listing").iterate_versions(args.word):
             print(repository_url_to_download_zip_url(url, val["ref"].replace("refs/tags/", "")))
 
+
 def downloading(args):
     app = get_app()
     setup_logging(app, args)
     print(app.activate_plugin("downloading").download(args.url, args.version))
+
 
 def extracting(args):
     app = get_app()
     setup_logging(app, args)
     zipppath = app.activate_plugin("downloading").download(args.url, args.version)
     print(app.activate_plugin("extracting").extract(zipppath))
+
 
 def information(args):
     app = get_app()
@@ -79,6 +87,7 @@ def information(args):
     print(information.dependencies)
     print(information.exists_info())
 
+
 def creation(args):
     app = get_app()
     setup_logging(app, args)
@@ -86,7 +95,7 @@ def creation(args):
     bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
     information = app.activate_plugin("information", bower_json_path)
 
-    ## korpokkur
+    # korpokkur
     app.include("korpokkur.scaffoldgetter")
     app.include("korpokkur.walker")
     app.include("korpokkur.detector")
@@ -103,9 +112,10 @@ def creation(args):
     detector = app.activate_plugin("detector")
     walker = app.activate_plugin("walker", input, detector, reproduction)
     dst = app.registry.setting["creation.work.dirpath"]
-    input.update({"Undefined":"`Undefined"})
+    input.update({"Undefined": "`Undefined"})
     scaffold.walk(walker, dst, overwrite=True)
     print(os.path.join(dst, information.package))
+
 
 def main(sys_args=sys.argv):
     parser = argparse.ArgumentParser()
@@ -159,4 +169,3 @@ def main(sys_args=sys.argv):
     except AttributeError:
         parser.error("unknown action")
     return func(args)
-

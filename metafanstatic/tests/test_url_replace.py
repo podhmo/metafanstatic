@@ -1,7 +1,9 @@
 # -*- coding:utf-8 -*-
 import unittest
 
+
 class URLReplaceTests(unittest.TestCase):
+
     def test_repository_url_to_download_zip_url(self):
         """
         hogan: git://github.com/twitter/hogan.js.git

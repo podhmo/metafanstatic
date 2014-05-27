@@ -4,14 +4,17 @@ logger = logging.getLogger(__name__)
 import json
 import os.path
 
+
 class ConflictCacheException(Exception):
     pass
+
 
 class CacheItemNotFound(Exception):
     pass
 
 
 class JSONFileCache(object):
+
     def __init__(self, storepath, cachepath, cache, check=True, overwrite=True):
         self.storepath = storepath
         self.cachepath = cachepath
@@ -37,7 +40,6 @@ class JSONFileCache(object):
             os.makedirs(dirpath)
         with open(self.cachepath, "w") as wf:
             wf.write(json.dumps(self.cache))
-
 
     def store_stream(self, k, filestream):
         path = os.path.join(self.storepath, filestream.name)

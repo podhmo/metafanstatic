@@ -11,8 +11,10 @@ import os.path
 
 from .cache import JSONFileCache
 
+
 class _FileStreamAdapter(object):
-    def __init__(self, url, requests_stream, chunk_size=8*1024):
+
+    def __init__(self, url, requests_stream, chunk_size=8 * 1024):
         self.url = url
         self.requests_stream = requests_stream
         self.chunk_size = chunk_size
@@ -32,6 +34,8 @@ class _FileStreamAdapter(object):
 
 github_rx = re.compile(r"git://github\.com/(\S+)\.git$")
 _zip_url_cache = {}
+
+
 def repository_url_to_download_zip_url(url, version=None):
     global _zip_url_cache
     k = (url, version)
@@ -42,7 +46,7 @@ def repository_url_to_download_zip_url(url, version=None):
     url = None
     if m:
         if version is None:
-            url =  "https://github.com/{name}/archive/master.zip".format(name=m.group(1))
+            url = "https://github.com/{name}/archive/master.zip".format(name=m.group(1))
         else:
             url = "https://github.com/{name}/archive/{version}.zip".format(name=m.group(1), version=version)
 
@@ -51,13 +55,15 @@ def repository_url_to_download_zip_url(url, version=None):
     _zip_url_cache[k] = url
     return url
 
+
 @implementer(IDownloading, IPlugin)
 class DownloadingFromRepositoryURI(object):
+
     @classmethod
     def create_from_setting(cls, setting):
         return cls(
-            setting["download.cache.dirpath"], 
-            setting["download.cache.filename"], 
+            setting["download.cache.dirpath"],
+            setting["download.cache.filename"],
             to_download_url=repository_url_to_download_zip_url
         )
 
@@ -74,7 +80,6 @@ class DownloadingFromRepositoryURI(object):
             logger.debug("download: %s", zip_url)
             return self.cache.store_stream(zip_url, _FileStreamAdapter(url, requests.get(zip_url, stream=True)))
 
+
 def includeme(config):
     config.add_plugin("downloading", DownloadingFromRepositoryURI)
-
-

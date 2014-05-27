@@ -7,17 +7,19 @@ import os.path
 from .cache import JSONFileCache
 import zipfile
 
+
 @implementer(IExtracting, IPlugin)
 class ExtractingFromZipfile(object):
+
     @classmethod
     def create_from_setting(cls, setting):
         return cls(
-            setting["extracting.work.dirpath"], 
+            setting["extracting.work.dirpath"],
             setting["extracting.cache.filename"],
         )
 
     def __init__(self, dirpath, cachename):
-        self.cache = JSONFileCache.load(dirpath, os.path.join(dirpath, cachename)) #zippath -> bower.json
+        self.cache = JSONFileCache.load(dirpath, os.path.join(dirpath, cachename))  # zippath -> bower.json
         self.work_dir = dirpath
 
     def extract(self, zippath):
@@ -37,8 +39,6 @@ class ExtractingFromZipfile(object):
         zf.extractall(self.work_dir)
         return bower_json_path
 
+
 def includeme(config):
     config.add_plugin("extracting", ExtractingFromZipfile)
-
-
-

@@ -10,7 +10,9 @@ from .compat import FileNotFoundError
 junk_prefix = re.compile(r'^/\./|^\./')
 js_sufix = re.compile(r'\.js$')
 
+
 class JSResourceIterator(object):
+
     def __init__(self, basepath, files, dst):
         self.basepath = basepath
         self.files = files
@@ -38,24 +40,27 @@ class JSResourceIterator(object):
                 minified = flatten_filename(self.basepath, minified_path)
             else:
                 minified = False
-            ##xxxx:
+            # xxxx:
             self.copyfiles(f, filename)
             self.copyfiles(minified_path, minified)
 
             yield namenize(filename), filename, minified
 
+
 def flatten_filename(root, js_file):
     flattend = js_file.replace(root, "")
     return junk_prefix.sub("", flattend).lstrip("/")
 
+
 def minified_name(name):
     return js_sufix.sub(".min.js", name)
 
+
 def namenize(filename):
-    return os.path.basename(filename).replace(".", "_")
+    return os.path.basename(filename).replace(".", "_").replace("-", "_")
 
 import pprint
 
+
 def dict_print(D):
     return pprint.pformat(D, indent=2, width=120)
-
