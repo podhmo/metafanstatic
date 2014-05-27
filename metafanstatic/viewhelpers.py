@@ -19,9 +19,10 @@ class JSResourceIterator(object):
         self.dst = dst
 
     def copyfiles(self, filepath, filename):
-        if filename:
-            dst = os.path.join(self.dst, filename)
-            logger.debug("copy file: %s -> %s", filepath, dst)
+        if not filename:
+            return
+        dst = os.path.join(self.dst, filename)
+        logger.debug("copy file: %s -> %s", filepath, dst)
         try:
             shutil.copy2(filepath, dst)
         except FileNotFoundError as e:
