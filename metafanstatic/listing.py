@@ -16,7 +16,8 @@ from .urls import get_repository_fullname_from_url
 def repository_url_to_tag_json_url(url):
     name = get_repository_fullname_from_url(url)
     if name:
-        return "https://api.github.com/repos/{name}/git/refs/tags".format(name=name)
+        return "https://api.github.com/repos/{name}/tags".format(name=name)
+#        return "https://api.github.com/repos/{name}/git/refs/tags".format(name=name)
     raise NotImplementedError(url)
 
 
@@ -94,7 +95,7 @@ class Listing(object):
         except KeyError:
             tag_json_url = repository_url_to_tag_json_url(url)
             logger.debug("versions: %s", tag_json_url)
-            url_version_pair_list = [(url, val) for val in requests.get(tag_json_url).json()]
+            url_version_pair_list = requests.get(tag_json_url).json()
             self.versions_cache.store(word, (time.time(), url_version_pair_list))
             return url_version_pair_list
 

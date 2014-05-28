@@ -56,15 +56,14 @@ def versions(args):
     app = get_app()
     setup_logging(app, args)
     if args.describe == "json":
-        for _, val in app.activate_plugin("listing").iterate_versions(args.word):
+        for val in app.activate_plugin("listing").iterate_versions(args.word):
             print(val)
     elif args.describe == "version":
-        for _, val in app.activate_plugin("listing").iterate_versions(args.word):
-            print(val["ref"].replace("refs/tags/", ""))
+        for val in app.activate_plugin("listing").iterate_versions(args.word):
+            print(val["name"])
     elif args.describe == "zip":
-        from .downloading import repository_url_to_download_zip_url
-        for url, val in app.activate_plugin("listing").iterate_versions(args.word):
-            print(repository_url_to_download_zip_url(url, val["ref"].replace("refs/tags/", "")))
+        for val in app.activate_plugin("listing").iterate_versions(args.word):
+            print(val["zipball_url"])
 
 
 def get_url_from_word(app, word):
@@ -80,11 +79,33 @@ def get_url_and_version(app, word, version):
         return url, version
     logger.info("version is not specified. finding latest version of %s", word)
     versions = app.activate_plugin("listing").iterate_versions(word, url=url)
+
     if not versions:
         sys.exit(0)  # xxx:
-    version = next(reversed(list(versions)))[1]["ref"].replace("refs/tags/", "")
+
+    versions = [v["name"] for v in versions]
+    version = choose_it(versions)
     logger.info("latest version is %s", version)
     return url, version
+
+
+def err(line):
+    sys.stderr.write(line)
+    sys.stderr.write("\n")
+    sys.stderr.flush()
+
+
+def choose_it(xs):
+    for i, line in enumerate(xs[:10]):
+        err("{}: {}".format(i, line))
+
+    while True:
+        try:
+            err("please, choose item")
+            n = sys.stdin.readline().strip()
+            return xs[int(n)]
+        except (TypeError, IndexError, ValueError) as e:
+            logger.warn(e)
 
 
 def downloading(args):
@@ -105,14 +126,32 @@ def extracting(args):
 def information(args):
     app = get_app()
     setup_logging(app, args)
-    url, version = get_url_and_version(app, args.word, args.version)
-    print(url, version)
-    # zipppath = app.activate_plugin("downloading").download(url, version)
-    # bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
-    # information = app.activate_plugin("information", bower_json_path)
-    # print(information.description)
-    # print(information.dependencies)
-    # print(information.exists_info())
+
+    result = []
+    history = {}
+
+    def write(*args):
+        result.append(" ".join(str(e) for e in args))
+
+    def _information(word, version, raw_expression=""):
+        if word in history:
+            return
+        history[word] = 1
+
+        url, version = get_url_and_version(app, word, version)
+        if args.local:
+            zipppath = app.activate_plugin("downloading").download(url, version)
+            bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
+            info = app.activate_plugin("information", bower_json_path, version)
+        else:
+            info = app.activate_plugin("information:remote", url, version)
+        write(info.name, info.version, raw_expression, ":", info.description)
+        for data in info.dependencies:
+            _information(data["name"], data["version"], data["raw_expression"])
+    _information(args.word, args.version)
+
+    for line in result:
+        print(line)
 
 
 def creation(args):
@@ -181,9 +220,10 @@ def main(sys_args=sys.argv):
     information_parser = sub_parsers.add_parser("information")
     information_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     information_parser.add_argument("--version")
+    information_parser.add_argument("--local", action="store_true", default=False)
     information_parser.add_argument("word")
     information_parser.add_argument("--description", action="store_true")
-    information_parser.set_defaults(logging="DEBUG", func=information)
+    information_parser.set_defaults(logging="INFO", func=information)
 
     create_parser = sub_parsers.add_parser("create")
     create_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])

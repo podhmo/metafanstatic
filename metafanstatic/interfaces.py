@@ -1,5 +1,8 @@
 # -*- coding:utf-8 -*-
-from zope.interface import Interface
+from zope.interface import (
+    Interface,
+    Attribute
+)
 
 
 class IListing(Interface):
@@ -33,4 +36,8 @@ class IExtracting(Interface):
 
 
 class IInformation(Interface):
-    pass
+    package = Attribute("package ame")
+    # name = Attribute("")
+    # dependencies = Attribute("")
+    # version = Attribute("")
+    # license = Attribute("")
