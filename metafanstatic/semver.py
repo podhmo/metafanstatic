@@ -47,7 +47,7 @@ class SemverVersion(Version):
             for c, (x, y) in enumerate(zip_longest(self.version, other.version)):
                 if x == "x" or x == "*":
                     continue
-                if y == "y" or y == "*":
+                if y == "x" or y == "*":
                     continue
 
                 if y is None:

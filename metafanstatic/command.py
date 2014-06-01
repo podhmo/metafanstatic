@@ -73,7 +73,7 @@ def get_url_from_word(app, word):
         return val["url"]
 
 
-def get_url_and_version(app, word, version):
+def get_url_and_version(app, word, version, restriction=""):
     url = get_url_from_word(app, word)
     if version is not None:
         return url, version
@@ -84,7 +84,7 @@ def get_url_and_version(app, word, version):
         sys.exit(0)  # xxx:
 
     versions = [v["name"] for v in versions]
-    version = choose_it(versions)
+    version = choose_it(versions, restriction)
     logger.info("latest version is %s", version)
     return url, version
 
@@ -95,7 +95,12 @@ def err(line):
     sys.stderr.flush()
 
 
-def choose_it(xs):
+def choose_it(xs, restriction=""):
+    from semver import max_satisfying
+    return max_satisfying(xs, restriction, loose=True)
+
+
+def choose_it_by_hand(xs):
     for i, line in enumerate(xs[:10]):
         err("{}: {}".format(i, line))
 
@@ -111,14 +116,14 @@ def choose_it(xs):
 def downloading(args):
     app = get_app()
     setup_logging(app, args)
-    url, version = get_url_and_version(app, args.word, args.version)
+    url, version = get_url_and_version(app, args.word, args.version, args.restriction or "")
     print(app.activate_plugin("downloading").download(url, version))
 
 
 def extracting(args):
     app = get_app()
     setup_logging(app, args)
-    url, version = get_url_and_version(app, args.word, args.version)
+    url, version = get_url_and_version(app, args.word, args.version, args.restriction or "")
     zipppath = app.activate_plugin("downloading").download(url, version)
     print(app.activate_plugin("extracting").extract(zipppath))
 
@@ -138,7 +143,7 @@ def information(args):
             return
         history[word] = 1
 
-        url, version = get_url_and_version(app, word, version)
+        url, version = get_url_and_version(app, word, version, args.restriction or "")
         if args.local:
             zipppath = app.activate_plugin("downloading").download(url, version)
             bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
@@ -157,7 +162,7 @@ def information(args):
 def creation(args):
     app = get_app()
     setup_logging(app, args)
-    url, version = get_url_and_version(app, args.word, args.version)
+    url, version = get_url_and_version(app, args.word, args.version, args.restriction or "")
     zipppath = app.activate_plugin("downloading").download(url, version)
     bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
     information = app.activate_plugin("information", bower_json_path)
@@ -208,18 +213,21 @@ def main(sys_args=sys.argv):
     download_parser = sub_parsers.add_parser("download")
     download_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     download_parser.add_argument("--version")
+    download_parser.add_argument("--restriction")
     download_parser.add_argument("word")
     download_parser.set_defaults(logging="DEBUG", func=downloading, version=None)
 
     extract_parser = sub_parsers.add_parser("extract")
     extract_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     extract_parser.add_argument("--version")
+    extract_parser.add_argument("--restriction")
     extract_parser.add_argument("word")
     extract_parser.set_defaults(logging="DEBUG", func=extracting)
 
     information_parser = sub_parsers.add_parser("information")
     information_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     information_parser.add_argument("--version")
+    information_parser.add_argument("--restriction")
     information_parser.add_argument("--local", action="store_true", default=False)
     information_parser.add_argument("word")
     information_parser.add_argument("--description", action="store_true")
@@ -227,6 +235,7 @@ def main(sys_args=sys.argv):
 
     create_parser = sub_parsers.add_parser("create")
     create_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+    create_parser.add_argument("--restriction")
     create_parser.add_argument("--version")
     create_parser.add_argument("word")
     create_parser.set_defaults(logging="DEBUG", func=creation)

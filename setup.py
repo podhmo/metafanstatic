@@ -17,7 +17,8 @@ install_requires=[
     'setuptools',
     'requests', 
     'fanstatic', 
-    "korpokkur"
+    "korpokkur", 
+    "semver" #github
     ]
 
 docs_extras = [
