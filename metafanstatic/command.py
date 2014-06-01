@@ -6,6 +6,7 @@ import os.path
 import sys
 from configless import Configurator
 from .viewhelpers import namenize
+import json
 
 def get_app(setting={
         "entry_points_name": "korpokkur.scaffold",
@@ -21,7 +22,7 @@ def get_app(setting={
         "download.cache.filename": "cache.json",
         "extracting.work.dirpath": "/tmp/metafanstaticwork",
         "extracting.cache.filename": "cache.json",
-        "creation.work.dirpath": "/tmp/metafanstaticbuild",
+        "creation.work.dirpath": ".",
         "creation.cache.filename": "cache.json",
         "input.prompt": "{word}?",
 }):
@@ -79,7 +80,7 @@ def get_url_from_word(app, word):
 
 def get_url_and_version(app, word, version, restriction=""):
     url = get_url_from_word(app, word)
-    if version is not None:
+    if version:
         return url, version
     logger.info("version is not specified. finding latest version of %s", word)
     versions = app.activate_plugin("listing").iterate_versions(word, url=url)
@@ -132,31 +133,45 @@ def extracting(args):
 
 
 class DependencyInformation(object):
-    def __init__(self, app, local=False):
+    def __init__(self, app, local=False, config=None):
         self.app = app
         self.result = {}
         self.history = {}
         self.local = local
+        if config and not hasattr(config, "items"):  # xxx
+            with open(config, "r") as rf:
+                self.config = json.load(rf)
+        else:
+            self.config = config or {}
 
     def write(self, word, info, version):
         self.result[word] = {"restriction": info.version,
                              "name": word,
                              "pythonname": namenize(word),
+                             "module": info.module,
                              "description": info.description,
                              "bower_dir_path": info.bower_dir_path,
-                             "info": info,
                              "package": info.package,
                              "main_js_path_list": info.main_js_path_list,
                              "version": version}
         if info.dependencies:
-            self.result[word]["dependencies"] = [d["name"] for d in info.dependencies]
+            self.result[word]["dependencies"] = info.dependencies
+
+        subconfig = self.config.get(word, {})
+
+        if "dependencies" in subconfig:
+            dependencies = self.result[word].get("dependencies", [])
+            for name in subconfig["dependencies"]:
+                if name not in dependencies:
+                    dependencies.append(name)
+            self.result[word]["dependencies"] = dependencies
 
     def _collect(self, word, version, raw_expression=""):
         if word in self.history:
             return
         self.history[word] = 1
-        url, version = get_url_and_version(self.app, word, version, raw_expression)
 
+        url, version = get_url_and_version(self.app, word, version, raw_expression)
         if self.local:
             zipppath = self.app.activate_plugin("downloading").download(url, version)
             bower_json_path = (self.app.activate_plugin("extracting").extract(word, version, zipppath))
@@ -164,8 +179,8 @@ class DependencyInformation(object):
         else:
             info = self.app.activate_plugin("information:remote", url, version)
         self.write(word, info, version)
-        for data in info.dependencies:
-            self._collect(data["name"], None, data["version"])
+        for data in self.result[word].get("dependencies", []):
+            self._collect(data["name"], "", data.get("version", ""))
 
     def collect(self, word, version, raw_expression=""):
         self._collect(word, version, version)
@@ -177,15 +192,17 @@ class DependencyInformation(object):
             if word not in pro:
                 pro.append(word)
             if "dependencies" in self.result[word]:
-                queue.extend(self.result[word]["dependencies"])
+                for data in self.result[word].get("dependencies", []):
+                    queue.append(data["name"])
         self.result["pro"] = list(reversed(pro))
 
         # dependencies_module
         for name in self.result["pro"]:
             subinfo = self.result[name]
             subinfo["dependencies_module"] = modules = []
-            for parent_name in subinfo.get("dependencies", []):
-                modules.append(self.result[parent_name]["info"].module)
+            for data in subinfo.get("dependencies", []):
+                parent_name = data["name"]
+                modules.append(self.result[parent_name]["module"])
         return self.result
 
 
@@ -193,7 +210,7 @@ def information(args):
     app = get_app()
     setup_logging(app, args)
     _, version = get_url_and_version(app, args.word, args.version, args.restriction or "")
-    dinfo = DependencyInformation(app, args.local)
+    dinfo = DependencyInformation(app, args.local, args.config)
     result = dinfo.collect(args.word, version, version)
     import pprint
     pprint.pprint(result)
@@ -214,7 +231,7 @@ def creation(args):
 
     getter = app.activate_plugin("scaffoldgetter")
     scaffold = getter.get_scaffold("metafanstatic")
-    deps_result = DependencyInformation(app, True).collect(args.word, version, version)
+    deps_result = DependencyInformation(app, True, args.config).collect(args.word, version, version)
     for name in deps_result["pro"]:
         paramaters = {}
         paramaters.update(deps_result[name])
@@ -274,6 +291,7 @@ def main(sys_args=sys.argv):
     information_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     information_parser.add_argument("--version")
     information_parser.add_argument("--restriction")
+    information_parser.add_argument("--config")
     information_parser.add_argument("--local", action="store_true", default=False)
     information_parser.add_argument("word")
     information_parser.add_argument("--description", action="store_true")
@@ -283,6 +301,7 @@ def main(sys_args=sys.argv):
     create_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     create_parser.add_argument("--restriction")
     create_parser.add_argument("--version")
+    create_parser.add_argument("--config")
     create_parser.add_argument("word")
     create_parser.set_defaults(logging="DEBUG", func=creation)
 

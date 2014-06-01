@@ -36,6 +36,12 @@ class ExtractingFromZipfile(object):
         for name in zf.namelist():
             if "bower.json" in name:
                 bower_json_path = os.path.join(self.work_dir, name)
+                break
+        if bower_json_path is None:
+            for name in zf.namelist():
+                if "component.json" in name:
+                    bower_json_path = os.path.join(self.work_dir, name)
+                    break
         zf.extractall(self.work_dir)
         if bower_json_path is None:
             toplevel = os.path.split(zf.namelist()[0])[0]
