@@ -14,6 +14,9 @@ def get_app(setting={
         "listing.cache.dirpath": "/tmp/metafanstaticcache",
         "listing.cache.versions.filename": "cache.versions.json",
         "listing.cache.url.filename": "cache.url.json",
+        "information.cache.dirpath": "/tmp/metafanstaticcache",
+        "information.cache.trees.filename": "cache.trees.json",
+        "information.cache.bower.filename": "cache.bower.json",
         "download.cache.dirpath": "/tmp/metafanstaticcache",
         "download.cache.filename": "cache.json",
         "extracting.work.dirpath": "/tmp/metafanstaticwork",
@@ -82,7 +85,6 @@ def get_url_and_version(app, word, version, restriction=""):
 
     if not versions:
         sys.exit(0)  # xxx:
-
     versions = [v["name"] for v in versions]
     version = choose_it(versions, restriction)
     logger.info("latest version is %s", version)
@@ -132,31 +134,44 @@ def information(args):
     app = get_app()
     setup_logging(app, args)
 
-    result = []
+    result = {}
     history = {}
 
-    def write(*args):
-        result.append(" ".join(str(e) for e in args))
+    def write(word, info, version):
+        result[word] = {"restriction": info.version,
+                        "version": version}
+        if info.dependencies:
+            result[word]["dependencies"] = [d["name"] for d in info.dependencies]
 
     def _information(word, version, raw_expression=""):
         if word in history:
             return
         history[word] = 1
+        url, version = get_url_and_version(app, word, version, raw_expression)
 
-        url, version = get_url_and_version(app, word, version, args.restriction or "")
         if args.local:
             zipppath = app.activate_plugin("downloading").download(url, version)
             bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
             info = app.activate_plugin("information", bower_json_path, version)
         else:
             info = app.activate_plugin("information:remote", url, version)
-        write(info.name, info.version, raw_expression, ":", info.description)
+        write(word, info, version)
         for data in info.dependencies:
-            _information(data["name"], data["version"], data["raw_expression"])
-    _information(args.word, args.version)
+            _information(data["name"], None, data["version"])
 
-    for line in result:
-        print(line)
+    _information(args.word, args.version, raw_expression=args.restriction or "")
+
+    queue = [args.word]
+    pro = []
+    while queue:
+        word = queue.pop(0)
+        if word not in pro:
+            pro.append(word)
+        if "dependencies" in result[word]:
+            queue.extend(result[word]["dependencies"])
+    result["pro"] = list(reversed(pro))
+    import pprint
+    pprint.pprint(result)
 
 
 def creation(args):

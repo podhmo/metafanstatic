@@ -53,7 +53,7 @@ class Listing(object):
         cachename = self.versions_cache_name
         return JSONDictCache.load(dirpath, os.path.join(dirpath, cachename))  # word -> versions
 
-    EXPIRE_RANGE = 60 * 5
+    EXPIRE_RANGE = 60 * 5 * (12 * 24)
 
     def iterate_lookup(self, word):
         try:
@@ -80,12 +80,6 @@ class Listing(object):
             yield val
 
     def iterate_versions(self, word, url=None):
-        if url is None:
-            urls = self.iterate_lookup(word)
-            if not urls:
-                return []
-            data = next(iter(urls))
-            url = data["url"]
         try:
             (tm, versions) = self.versions_cache[word]
             tm = float(tm)
@@ -93,6 +87,12 @@ class Listing(object):
                 raise KeyError("older")
             return versions
         except KeyError:
+            if url is None:
+                urls = self.iterate_lookup(word)
+                if not urls:
+                    return []
+                data = next(iter(urls))
+                url = data["url"]
             tag_json_url = repository_url_to_tag_json_url(url)
             logger.debug("versions: %s", tag_json_url)
             url_version_pair_list = requests.get(tag_json_url).json()

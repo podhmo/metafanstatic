@@ -5,8 +5,9 @@ import os.path
 logger = logging.getLogger(__name__)
 from zope.interface import implementer
 from metafanstatic.interfaces import IInformation
-from .utils import safe_json_load
+from .utils import safe_json_load, reify
 from .urls import get_repository_fullname_from_url
+from .cache import JSONDictCache
 
 
 def repository_url_to_github_trees_url(url, version):
@@ -56,15 +57,7 @@ class BaseInformation(object):
     def dependencies(self):
         r = []
         for name, raw_version in self.bower_json.get("dependencies", {}).items():
-            if raw_version == "":
-                version = "master"  # xxx:
-            elif raw_version.startswith("~"):  # xxx:
-                version = raw_version.lstrip("~")
-            else:
-                version = "master"  # xxxx:
-            # elif raw_version.startswith(("<", ">")):
-            #     version = version.lstrip("<=>")  # xxx:
-            r.append({"name": name, "version": version, "raw_expression": raw_version})
+            r.append({"name": name, "version": raw_version})
         return r
 
 
@@ -77,13 +70,19 @@ class RemoteInformation(BaseInformation):
     def create_from_setting(cls, setting, url, version):
         trees_url = repository_url_to_github_trees_url(url, version)
         raw_url = repository_url_to_github_raw_url(url, version, cls.target_file)
-        return cls(url, version, trees_url=trees_url, raw_url=raw_url)
+        return cls(url, version, trees_url=trees_url, raw_url=raw_url,
+                   cachedir=setting["information.cache.dirpath"],
+                   trees_cache_name=setting["information.cache.trees.filename"],
+                   raw_cache_name=setting["information.cache.bower.filename"])
 
-    def __init__(self, url, version, trees_url, raw_url):
+    def __init__(self, url, version, trees_url, raw_url, cachedir, trees_cache_name, raw_cache_name):
         self.url = url
         self.version = version
         self.trees_url = trees_url
         self.raw_url = raw_url
+        self.cachedir = cachedir
+        self.trees_cache_name = trees_cache_name
+        self.raw_cache_name = raw_cache_name
         self.bower_json = self.get_information()
 
     @property
@@ -93,17 +92,39 @@ class RemoteInformation(BaseInformation):
         except KeyError:
             return get_repository_fullname_from_url(self.url)
 
+    @reify
+    def trees_cache(self):
+        dirpath = self.cachedir
+        cachename = self.trees_cache_name
+        return JSONDictCache.load(dirpath, os.path.join(dirpath, cachename))  # url -> trees
+
+    @reify
+    def raw_cache(self):
+        dirpath = self.cachedir
+        cachename = self.raw_cache_name
+        return JSONDictCache.load(dirpath, os.path.join(dirpath, cachename))  # url -> raw
+
     def iterate_trees(self):
-        logger.info("loading:%s", self.trees_url)
-        response = requests.get(self.trees_url).json()
-        for data in response.get("tree", []):
-            yield data
+        try:
+            for data in self.trees_cache[self.trees_url]:
+                yield data
+        except KeyError:
+            logger.info("loading:%s", self.trees_url)
+            response = requests.get(self.trees_url).json()
+            self.trees_cache.store(self.trees_url, list(response.get("tree", [])))
+            for data in response.get("tree", []):
+                yield data
 
     def get_information(self):
         for data in self.iterate_trees():
             if data["path"].endswith(self.target_file):
-                logger.info("loading:%s", self.raw_url)
-                return requests.get(self.raw_url).json()
+                try:
+                    return self.raw_cache[self.raw_url]
+                except KeyError:
+                    logger.info("loading:%s", self.raw_url)
+                    response = requests.get(self.raw_url).json()
+                    self.raw_cache.store(self.raw_url, response)
+                    return response
         logger.warn("{} is not found in {}".format(self.target_file, self.trees_url))
         return fake_bower_json_from_repository_url(self.url, self.version)
 
