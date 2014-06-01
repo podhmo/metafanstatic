@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 import re
-github_rx = re.compile(r"git://github\.com/(\S+)\.git$")
+github_rx = re.compile(r"git://github\.com/(\S+)(?:\.git)?$")
 
 
 def get_repository_fullname_from_url(url):

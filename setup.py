@@ -18,7 +18,7 @@ install_requires=[
     'requests', 
     'fanstatic', 
     "korpokkur", 
-    "node-semver"
+    "node-semver", 
     ]
 
 docs_extras = [

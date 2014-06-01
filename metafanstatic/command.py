@@ -87,7 +87,12 @@ def get_url_and_version(app, word, version, restriction=""):
 
     if not versions:
         sys.exit(0)  # xxx:
-    versions = [v["name"] for v in versions]
+    try:
+        versions = [v["name"] for v in versions]
+    except TypeError:
+        logger.info("url: %s", url)
+        logger.info(versions)
+        sys.exit(0)
     version = choose_it(versions, restriction)
     logger.info("latest version is %s", version)
     return url, version
