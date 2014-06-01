@@ -15,6 +15,7 @@ except IOError:
 
 install_requires=[
     'setuptools',
+    'korpokkur'
     ]
 
 docs_extras = [
@@ -60,7 +61,12 @@ setup(name='genfa',
           },
       tests_require = tests_require,
       cmdclass = {'test': PyTest},
-      entry_points = """      """
+      entry_points = """
+      [korpokkur.scaffold]
+      genfa = genfa.scaffolds:Package
+      [console_scripts]
+      genfa = genfa.command:main
+      """
       )
 
 

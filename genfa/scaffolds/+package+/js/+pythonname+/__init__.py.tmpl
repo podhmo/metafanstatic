@@ -1,0 +1,23 @@
+# -*- coding:utf-8 -*-
+#<%namespace module="genfa.viewhelpers" name="vh"/>
+<%\
+from genfa import viewhelpers as vh
+import os.path
+resource_path = os.path.join(os.path.dirname(context.get(":dst:", ".")), "resources")
+%>
+from fanstatic import Library, Resource
+library = Library('${context.get("pythonname")}', 'resources')
+
+depends = []
+%for m in context.get("dependencies_module",[]):
+import ${m}
+depends.extend([v for name, v in ${m}.__dict__.items() if isinstance(v, Resource)])
+%endfor
+
+%for name, filename, minified in vh.JSResourceIterator(bower_dir_path, main_js_path_list, resource_path):
+  %if minified:
+${name} = Resource(library, '${filename}', minified='${minified}', depends=depends)
+  %else:
+${name} = Resource(library, '${filename}', depends=depends)
+  %endif
+%endfor
