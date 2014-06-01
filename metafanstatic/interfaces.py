@@ -31,7 +31,7 @@ class ICreation(Interface):
 
 class IExtracting(Interface):
 
-    def extract(zip_path):
+    def extract(word, version, zip_path):
         pass
 
 

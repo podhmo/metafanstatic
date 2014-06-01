@@ -8,7 +8,7 @@ from metafanstatic.interfaces import IInformation
 from .utils import safe_json_load, reify
 from .urls import get_repository_fullname_from_url
 from .cache import JSONDictCache
-
+from .viewhelpers import namenize
 
 def repository_url_to_github_trees_url(url, version):
     name = get_repository_fullname_from_url(url)
@@ -42,6 +42,10 @@ class BaseInformation(object):
         return "meta.js.{}".format(self.bower_json["name"])
 
     @property
+    def module(self):
+        return "js.{}".format(namenize(self.bower_json["name"]))
+
+    @property
     def name(self):
         return self.bower_json["name"]
 
@@ -59,6 +63,15 @@ class BaseInformation(object):
         for name, raw_version in self.bower_json.get("dependencies", {}).items():
             r.append({"name": name, "version": raw_version})
         return r
+
+    @reify
+    def main_js_path_list(self):
+        main = self.bower_json["main"]
+        if isinstance(main, (list, tuple)):
+            main_files = main
+        else:
+            main_files = [main]
+        return [os.path.join(self.bower_dir_path, f) for f in main_files]
 
 
 # see: metafanstatic.interfaces:IInformation
@@ -84,6 +97,7 @@ class RemoteInformation(BaseInformation):
         self.trees_cache_name = trees_cache_name
         self.raw_cache_name = raw_cache_name
         self.bower_json = self.get_information()
+        self.bower_dir_path = ""
 
     @property
     def name(self):
@@ -141,21 +155,12 @@ class Information(BaseInformation):
         self.bower_dir_path = os.path.dirname(self.bower_file_path)
         self.bower_json = safe_json_load(bower_file_path)
 
-    @reify
-    def main_js_path_list(self):
-        main = self.bower_json["main"]
-        if isinstance(main, (list, tuple)):
-            main_files = main
-        else:
-            main_files = [main]
-        return [os.path.join(self.bower_dir_path, f) for f in main_files]
-
     def push_data(self, input):
         input.update(self.bower_json)
         input.update(dict(package=self.package,
                           dependencies=self.bower_json.get("dependencies", []),
                           bower_dir_path=self.bower_dir_path,
-                          name=self.bower_json.get("name", "").replace("-", "_"),
+                          name=os.path.basename(self.bower_json.get("name", "").replace("-", "_")),
                           description=self.description,
                           main_js_path_list=self.main_js_path_list))
 

@@ -34,18 +34,28 @@ class JSResourceIterator(object):
     def __iter__(self):
         for f in self.files:
             if not os.path.exists(f):
-                raise Exception("{} is not found".format(f))
+                logger.warn("{} is not found".format(f))
+                continue
+            if os.path.isdir(f):
+                logger.warn("{} is directory".format(f))
+                continue
+
             filename = flatten_filename(self.basepath, f)
             minified_path = minified_name(f)
             if os.path.exists(minified_path):
                 minified = flatten_filename(self.basepath, minified_path)
             else:
                 minified = False
+            if filename == minified:
+                minified = False
             # xxxx:
             self.copyfiles(f, filename)
             self.copyfiles(minified_path, minified)
 
-            yield namenize(filename), filename, minified
+            ext = os.path.splitext(filename)[1]
+
+            if any(ext.endswith(x) for x in [".css", ".js"]):
+                yield namenize(filename), filename, minified
 
 
 def flatten_filename(root, js_file):
@@ -58,7 +68,10 @@ def minified_name(name):
 
 
 def namenize(filename):
-    return os.path.basename(filename).replace(".", "_").replace("-", "_")
+    name = os.path.basename(filename)
+    if name[0].isdigit():
+        name = "_" + name
+    return name.replace(".", "_").replace("-", "_")
 
 import pprint
 

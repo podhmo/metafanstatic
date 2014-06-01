@@ -2,11 +2,11 @@
 from fanstatic import get_needed, init_needed, Resource
 from fanstatic.core import DummyNeededResources
 from fanstatic.injector import TopBottomInjector
-import js.${name}
+import js.${pythonname}
 
 init_needed()
 
-for name,v in js.${name}.__dict__.items():
+for name,v in js.${pythonname}.__dict__.items():
     if isinstance(v, Resource):
         v.need()
 

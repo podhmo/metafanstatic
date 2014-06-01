@@ -5,7 +5,7 @@ import argparse
 import os.path
 import sys
 from configless import Configurator
-
+from .viewhelpers import namenize
 
 def get_app(setting={
         "entry_points_name": "korpokkur.scaffold",
@@ -23,6 +23,7 @@ def get_app(setting={
         "extracting.cache.filename": "cache.json",
         "creation.work.dirpath": "/tmp/metafanstaticbuild",
         "creation.cache.filename": "cache.json",
+        "input.prompt": "{word}?",
 }):
     config = Configurator(setting=setting)
     config.include("metafanstatic.listing")
@@ -127,49 +128,73 @@ def extracting(args):
     setup_logging(app, args)
     url, version = get_url_and_version(app, args.word, args.version, args.restriction or "")
     zipppath = app.activate_plugin("downloading").download(url, version)
-    print(app.activate_plugin("extracting").extract(zipppath))
+    print(app.activate_plugin("extracting").extract(args.word, version, zipppath))
+
+
+class DependencyInformation(object):
+    def __init__(self, app, local=False):
+        self.app = app
+        self.result = {}
+        self.history = {}
+        self.local = local
+
+    def write(self, word, info, version):
+        self.result[word] = {"restriction": info.version,
+                             "name": word,
+                             "pythonname": namenize(word),
+                             "description": info.description,
+                             "bower_dir_path": info.bower_dir_path,
+                             "info": info,
+                             "package": info.package,
+                             "main_js_path_list": info.main_js_path_list,
+                             "version": version}
+        if info.dependencies:
+            self.result[word]["dependencies"] = [d["name"] for d in info.dependencies]
+
+    def _collect(self, word, version, raw_expression=""):
+        if word in self.history:
+            return
+        self.history[word] = 1
+        url, version = get_url_and_version(self.app, word, version, raw_expression)
+
+        if self.local:
+            zipppath = self.app.activate_plugin("downloading").download(url, version)
+            bower_json_path = (self.app.activate_plugin("extracting").extract(word, version, zipppath))
+            info = self.app.activate_plugin("information", bower_json_path, version)
+        else:
+            info = self.app.activate_plugin("information:remote", url, version)
+        self.write(word, info, version)
+        for data in info.dependencies:
+            self._collect(data["name"], None, data["version"])
+
+    def collect(self, word, version, raw_expression=""):
+        self._collect(word, version, version)
+        # pro
+        queue = [word]
+        pro = []
+        while queue:
+            word = queue.pop(0)
+            if word not in pro:
+                pro.append(word)
+            if "dependencies" in self.result[word]:
+                queue.extend(self.result[word]["dependencies"])
+        self.result["pro"] = list(reversed(pro))
+
+        # dependencies_module
+        for name in self.result["pro"]:
+            subinfo = self.result[name]
+            subinfo["dependencies_module"] = modules = []
+            for parent_name in subinfo.get("dependencies", []):
+                modules.append(self.result[parent_name]["info"].module)
+        return self.result
 
 
 def information(args):
     app = get_app()
     setup_logging(app, args)
-
-    result = {}
-    history = {}
-
-    def write(word, info, version):
-        result[word] = {"restriction": info.version,
-                        "version": version}
-        if info.dependencies:
-            result[word]["dependencies"] = [d["name"] for d in info.dependencies]
-
-    def _information(word, version, raw_expression=""):
-        if word in history:
-            return
-        history[word] = 1
-        url, version = get_url_and_version(app, word, version, raw_expression)
-
-        if args.local:
-            zipppath = app.activate_plugin("downloading").download(url, version)
-            bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
-            info = app.activate_plugin("information", bower_json_path, version)
-        else:
-            info = app.activate_plugin("information:remote", url, version)
-        write(word, info, version)
-        for data in info.dependencies:
-            _information(data["name"], None, data["version"])
-
-    _information(args.word, args.version, raw_expression=args.restriction or "")
-
-    queue = [args.word]
-    pro = []
-    while queue:
-        word = queue.pop(0)
-        if word not in pro:
-            pro.append(word)
-        if "dependencies" in result[word]:
-            queue.extend(result[word]["dependencies"])
-    result["pro"] = list(reversed(pro))
+    _, version = get_url_and_version(app, args.word, args.version, args.restriction or "")
+    dinfo = DependencyInformation(app, args.local)
+    result = dinfo.collect(args.word, version, version)
     import pprint
     pprint.pprint(result)
 
@@ -178,9 +203,6 @@ def creation(args):
     app = get_app()
     setup_logging(app, args)
     url, version = get_url_and_version(app, args.word, args.version, args.restriction or "")
-    zipppath = app.activate_plugin("downloading").download(url, version)
-    bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
-    information = app.activate_plugin("information", bower_json_path, version)
 
     # korpokkur
     app.include("korpokkur.scaffoldgetter")
@@ -192,16 +214,20 @@ def creation(args):
 
     getter = app.activate_plugin("scaffoldgetter")
     scaffold = getter.get_scaffold("metafanstatic")
-    input = app.activate_plugin("input.dict", scaffold, {})
-    information.push_data(input)
-    emitter = app.activate_plugin("emitter.mako")
-    reproduction = app.activate_plugin("reproduction.physical", emitter, input)
-    detector = app.activate_plugin("detector")
-    walker = app.activate_plugin("walker", input, detector, reproduction)
-    dst = app.registry.setting["creation.work.dirpath"]
-    input.update({"Undefined": "`Undefined"})
-    scaffold.walk(walker, dst, overwrite=True)
-    print(os.path.join(dst, information.package))
+    deps_result = DependencyInformation(app, True).collect(args.word, version, version)
+    for name in deps_result["pro"]:
+        paramaters = {}
+        paramaters.update(deps_result[name])
+        input = app.activate_plugin("input.cli", scaffold)
+        input.update(paramaters)
+        emitter = app.activate_plugin("emitter.mako")
+        reproduction = app.activate_plugin("reproduction.physical", emitter, input)
+        detector = app.activate_plugin("detector")
+        walker = app.activate_plugin("walker", input, detector, reproduction)
+        dst = app.registry.setting["creation.work.dirpath"]
+        input.update({"Undefined": "`Undefined"})
+        scaffold.walk(walker, dst, overwrite=True)
+        print(os.path.join(dst, paramaters["package"]))
 
 
 def main(sys_args=sys.argv):
