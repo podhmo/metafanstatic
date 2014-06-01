@@ -180,7 +180,7 @@ def creation(args):
     url, version = get_url_and_version(app, args.word, args.version, args.restriction or "")
     zipppath = app.activate_plugin("downloading").download(url, version)
     bower_json_path = (app.activate_plugin("extracting").extract(zipppath))
-    information = app.activate_plugin("information", bower_json_path)
+    information = app.activate_plugin("information", bower_json_path, version)
 
     # korpokkur
     app.include("korpokkur.scaffoldgetter")
@@ -192,7 +192,7 @@ def creation(args):
 
     getter = app.activate_plugin("scaffoldgetter")
     scaffold = getter.get_scaffold("metafanstatic")
-    input = app.activate_plugin("input.dict", scaffold, information.data)
+    input = app.activate_plugin("input.dict", scaffold, {})
     information.push_data(input)
     emitter = app.activate_plugin("emitter.mako")
     reproduction = app.activate_plugin("reproduction.physical", emitter, input)

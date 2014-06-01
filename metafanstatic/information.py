@@ -141,6 +141,15 @@ class Information(BaseInformation):
         self.bower_dir_path = os.path.dirname(self.bower_file_path)
         self.bower_json = safe_json_load(bower_file_path)
 
+    @reify
+    def main_js_path_list(self):
+        main = self.bower_json["main"]
+        if isinstance(main, (list, tuple)):
+            main_files = main
+        else:
+            main_files = [main]
+        return [os.path.join(self.bower_dir_path, f) for f in main_files]
+
     def push_data(self, input):
         input.update(self.bower_json)
         input.update(dict(package=self.package,
