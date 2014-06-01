@@ -211,21 +211,25 @@ def main(sys_args=sys.argv):
 
     list_parser = sub_parsers.add_parser("list")
     list_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+    list_parser.add_argument("--clear", action="store_true", default=False)
     list_parser.add_argument("word")
     list_parser.set_defaults(logging="DEBUG", func=listing)
 
     lookup_parser = sub_parsers.add_parser("lookup")
+    lookup_parser.add_argument("--clear", action="store_true", default=False)
     lookup_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     lookup_parser.add_argument("word")
     lookup_parser.set_defaults(logging="DEBUG", func=lookup)
 
     versions_parser = sub_parsers.add_parser("versions")
+    versions_parser.add_argument("--clear", action="store_true", default=False)
     versions_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     versions_parser.add_argument("--describe", choices=["version", "zip", "json"])
     versions_parser.add_argument("word")
     versions_parser.set_defaults(logging="DEBUG", func=versions, describe="version")
 
     download_parser = sub_parsers.add_parser("download")
+    download_parser.add_argument("--clear", action="store_true", default=False)
     download_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     download_parser.add_argument("--version")
     download_parser.add_argument("--restriction")
@@ -233,6 +237,7 @@ def main(sys_args=sys.argv):
     download_parser.set_defaults(logging="DEBUG", func=downloading, version=None)
 
     extract_parser = sub_parsers.add_parser("extract")
+    extract_parser.add_argument("--clear", action="store_true", default=False)
     extract_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     extract_parser.add_argument("--version")
     extract_parser.add_argument("--restriction")
