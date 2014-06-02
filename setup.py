@@ -15,7 +15,8 @@ except IOError:
 
 install_requires=[
     'setuptools',
-    'korpokkur'
+    'korpokkur',
+    'fanstatic',
     ]
 
 docs_extras = [

@@ -1,0 +1,10 @@
+{
+  "sample-bootstrap":
+  {
+    "name": "sample-bootstrap",
+    "description": info.description,
+    "source-file-list": ["dist/util.js","dist/util.css"],
+    "version": 0.0.1
+  },
+}
+

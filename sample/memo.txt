@@ -1,0 +1,31 @@
+- urlの指定をどうするかという問題。
+-- dependenciesには在処(url,path)などを書いてもokにする
+
+コマンドで最初のrootとなるpathを渡す。
+今回はfs上のものを考える。
+
+fagen ./util --config util.config.json
+
+# そもそもbower.jsonに頼らないという方向もありなのではとは思っている。
+# compute valueに変えられそうな気がするな。
+	あくまでnameだけで良い。
+	pythonnameはcompute vaue
+@:moduleとpackageの違いはそのままで良いはず。この２つもcompute valueにできるが
+
+{
+  "restriction": info.version,
+  "name": word,
+  "pythonname": namenize(word),
+  "module": info.module,
+  "description": info.description,
+  "bower_dir_path": info.bower_dir_path,
+  "package": info.package,
+  "main_js_path_list": info.main_js_path_list,
+  "version": version
+}
+
+@:そもそもbower-pathではなくsrc-pathなのでは？
+	@:違う現在sourceが２個ある。bower-directoryが正しい。
+2: bower-directoryは誰が持つか。
+	jsonでは取得でいない。compluted_jsonにはok。
+@:ファイルはあとで絶対パスに変換されると良い。

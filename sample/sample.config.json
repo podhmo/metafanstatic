@@ -1,0 +1,6 @@
+{
+  "name": "sample",
+  "version": "0.0.1",
+  "description": "sample-package",
+  "main": ["dist/sample.js"],
+}
