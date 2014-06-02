@@ -25,20 +25,32 @@ def _makeOne(*args, **kwargs):
     return _getTarget()(*args, **kwargs)
 
 
+def dummy_mylib_is_installed_generator(decider):
+    yield "meta.js.mylib"
+
+
 data = _data.copy()
 bower_directory = "/tmp/bower"
 word = "sample-bootstrap"
-target = _makeOne(bower_directory)
+target = _makeOne(bower_directory, package_name_generator=dummy_mylib_is_installed_generator)
 
 result = target.complement(word, data)
 
 
 def test_keys():
-    assert sorted(list(result.keys())) == ["mylib", "pro", "sample-bootstrap"]
+    assert sorted(list(result.keys())) == ["mylib", "sample-bootstrap", "total"]
 
 
-def test_pro():
-    assert result["pro"] == ["mylib", "sample-bootstrap"]
+def test_total_pro():
+    assert result["total"]["pro"] == ["mylib", "sample-bootstrap"]
+
+
+def test_total_installed():
+    assert result["total"]["installed"] == ["meta.js.mylib"]
+
+
+def test_total_notistalled():
+    assert result["total"]["notinstalled"] == ["meta.js.sample-bootstrap"]
 
 
 def test_package():
