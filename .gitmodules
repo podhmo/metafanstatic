@@ -1,0 +1,6 @@
+[submodule "demo/zepto"]
+	path = demo/zepto
+	url = git@github.com:madrobby/zepto.git
+[submodule "demo/bootstrap"]
+	path = demo/bootstrap
+	url = git@github.com:twbs/bootstrap.git
