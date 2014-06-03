@@ -3,13 +3,15 @@ _data = {
     "sample-bootstrap":
     {
         "name": "sample-bootstrap",
+        "bower_directory": "/tmp/bower/sample-bootstrap",
         "main": ["dist/util.js", "dist/util.css"],
         "version": "0.0.1",
-        "dependencies": [{"mylib": "0.0.1"}]
+        "dependencies": {"mylib": "0.0.1"}
     },
     "mylib":
     {
         "name": "mylib",
+        "bower_directory": "/tmp/bower/mylib",
         "main": ["dist/mylib.js"],
         "version": "0.0.1"
     },
@@ -30,11 +32,9 @@ def dummy_mylib_is_installed_generator(decider):
 
 
 data = _data.copy()
-bower_directory = "/tmp/bower"
-word = "sample-bootstrap"
-target = _makeOne(bower_directory, package_name_generator=dummy_mylib_is_installed_generator)
+target = _makeOne(package_name_generator=dummy_mylib_is_installed_generator)
 
-result = target.complement(word, data)
+result = target.complement(data)
 
 
 def test_keys():
@@ -66,9 +66,9 @@ def test_module():
 
 
 def test_bowerdirectory():
-    assert result["sample-bootstrap"]["bower_directory"] == "/tmp/bower"
+    assert result["sample-bootstrap"]["bower_directory"] == "/tmp/bower/sample-bootstrap"
 
 
 def test_main_js_path_list():
-    assert result["sample-bootstrap"]["main_js_path_list"] == ['/tmp/bower/dist/util.js', '/tmp/bower/dist/util.css']
+    assert result["sample-bootstrap"]["main_js_path_list"] == ['/tmp/bower/sample-bootstrap/dist/util.js', '/tmp/bower/sample-bootstrap/dist/util.css']
 
