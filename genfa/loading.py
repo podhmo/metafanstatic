@@ -106,4 +106,3 @@ class CreateConfigMessageExit(object):
         }
         out(json.dumps(params, indent=2, ensure_ascii=False))
         sys.exit(-1)
-

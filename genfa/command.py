@@ -5,8 +5,8 @@ import json
 import argparse
 import sys
 import os.path
-import json
-from .loading import Loader, OverrideLoader
+from .loading import Loader, OverrideLoader, CreateConfigMessageExit, out
+
 
 def scanning(args):
     loader = Loader()
