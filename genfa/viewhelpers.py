@@ -59,7 +59,7 @@ class JSResourceIterator(object):
 
 
 def flatten_filename(root, js_file):
-    flattend = js_file.replace(root, "")
+    flattend = js_file.replace(root, "", 1)
     return junk_prefix.sub("", flattend).lstrip("/")
 
 

@@ -26,7 +26,7 @@ def load_from_file(filename):
 
 def pack_from_jsondict(jsondict, path):
     result = {}
-    result["bower_directory"] = os.path.dirname(path)
+    result["bower_directory"] = path
     result["name"] = jsondict["name"]
     result["version"] = jsondict.get("version")
     result["dependencies"] = jsondict.get("dependencies", [])
@@ -48,7 +48,8 @@ class OverrideLoader(object):
         filepath = "./{}.{}".format(os.path.basename(root), self.target_suffix)
         if not os.path.exists(filepath):
             return None
-        return self.packer(self.loader(filepath), root)
+        data = self.loader(filepath)
+        return self.packer(data, data["bower_directory"])
 
 
 class Loader(object):
@@ -77,7 +78,7 @@ class Loader(object):
             if noexception:
                 return None
             raise
-        return self.packer(data, path)
+        return self.packer(data, os.path.dirname(path))
 
 
 def err(message):
@@ -87,9 +88,9 @@ def err(message):
 
 
 def out(message):
-    sys.stderr.write(message)
-    sys.stderr.write("\n")
-    sys.stderr.flush()
+    sys.stdout.write(message)
+    sys.stdout.write("\n")
+    sys.stdout.flush()
 
 
 class CreateConfigMessageExit(object):
