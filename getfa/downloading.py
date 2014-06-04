@@ -2,6 +2,7 @@
 import logging
 logger = logging.getLogger(__name__)
 from zope.interface import implementer
+import json
 import requests
 import zipfile
 import os.path
@@ -9,6 +10,7 @@ from .interfaces import IDownloading, ICachedRequesting, ICache
 from .decorator import reify
 from .control import GithubAPIControl
 from .cache import CachedStreamRequesting, JSONFileCache, _FileStreamAdapter
+
 
 class NotZipFile(Exception):
     pass
@@ -23,6 +25,21 @@ def zip_extracting(zippath, dst):
     return os.path.join(dst, toplevel)
 
 
+def fake_bower_package(filename, dst):
+    dirname = os.path.splitext(filename)[0]
+    dirpath = os.path.join(dst, dirname)
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+    params = {
+        "name": os.path.basename(filename),
+        "version": "",
+        "main": [filename]
+    }
+    with open(os.path.join(dirpath, "bower.json"), "w") as wf:
+        wf.write(json.dumps(params))
+    return dirpath
+
+
 @implementer(IDownloading)
 class RawDownloading(object):
     def __init__(self, app):
@@ -31,7 +48,8 @@ class RawDownloading(object):
     def download(self, url, dst):
         logger.info("loading: %s", url)
         filestream = _FileStreamAdapter(url, requests.get(url, stream=True))
-        with open(os.path.join(dst, filestream.name), "wb") as wf:
+        dirpath = fake_bower_package(filestream.name, dst)
+        with open(os.path.join(dirpath, filestream.name), "wb") as wf:
             for chunk in filestream:
                 wf.write(chunk)
 

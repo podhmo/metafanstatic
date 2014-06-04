@@ -41,7 +41,9 @@ def searching(args):
 
 def downloading(args):
     if args.config:
-        return download_from_config(args)
+        return downloading_from_config(args)
+    if args.url:
+        return downloading_from_url(args)
     app = get_app(args)
     information = GithubInformation(app)
     downloading = GithubDownloading(app, information)
@@ -53,7 +55,13 @@ def downloading(args):
         print(downloading.download(args.word, args.dst, correct_version))
 
 
-def download_from_config(args):
+def downloading_from_url(args):
+    app = get_app(args)
+    downloading = RawDownloading(app)
+    print(downloading.download(args.url, args.dst))
+
+
+def downloading_from_config(args):
     app = get_app(args)
     information = GithubInformation(app)
     github_downloading = GithubDownloading(app, information)
@@ -130,7 +138,8 @@ def main(sys_args=sys.argv):
     download_parser = sub_parsers.add_parser("download")
     download_parser.add_argument("--version", default=None)
     download_parser.add_argument("--config", default=None)
-    download_parser.add_argument("word")
+    download_parser.add_argument("--url", default=None)
+    download_parser.add_argument("word", default=None, nargs="?")
     download_parser.add_argument("dst", default=".", nargs="?")
     download_parser.set_defaults(logging="DEBUG", func=downloading)
 
