@@ -1,13 +1,14 @@
 # -*- coding:utf-8 -*-
 import argparse
 import sys
-import pprint
 from configless import Configurator
+import json
 from .information import GithubInformation
-from .downloading import GithubDownloading
+from .downloading import GithubDownloading, RawDownloading, NotZipFile
 from .detector import GithubDetector
 from .classifier import GithubClassifier
 from .dependency import GithubDependencyCollector
+
 import logging
 logger = logging.getLogger(__name__)
 from semver import logger as semver_logger
@@ -39,10 +40,39 @@ def searching(args):
 
 
 def downloading(args):
+    if args.config:
+        return download_from_config(args)
     app = get_app(args)
     information = GithubInformation(app)
     downloading = GithubDownloading(app, information)
-    print(downloading.download(args.word, args.version, args.dst))
+    try:
+        print(downloading.download(args.word, args.dst, args.version))
+    except NotZipFile:
+        detector = GithubDetector(app)
+        correct_version = detector.choose_version(information, args.word, args.version)
+        print(downloading.download(args.word, args.dst, correct_version))
+
+
+def download_from_config(args):
+    app = get_app(args)
+    information = GithubInformation(app)
+    github_downloading = GithubDownloading(app, information)
+    raw_downloading = RawDownloading(app)
+
+    with open(args.config, "r") as rf:
+        params = json.load(rf)
+
+    detector = GithubDetector(app)
+
+    for name, data in params.items():
+        if "rawurl" in data:
+            print(raw_downloading.download(data["rawurl"], args.dst))
+        else:
+            try:
+                print(github_downloading.download(data["name"], args.dst, data["version"]))
+            except NotZipFile:
+                correct_version = detector.choose_version(information, data["name"], data["version"])
+                print(github_downloading.download(data["name"], args.dst, correct_version))
 
 
 def dependency(args):
@@ -56,7 +86,7 @@ def dependency(args):
         result = dependency.one_dependency(args.word, args.version)
     else:
         result = dependency.recursive_dependency(args.word, args.version)
-    pprint.pprint(result)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
 
 
 def clear(args):
@@ -99,6 +129,7 @@ def main(sys_args=sys.argv):
 
     download_parser = sub_parsers.add_parser("download")
     download_parser.add_argument("--version", default=None)
+    download_parser.add_argument("--config", default=None)
     download_parser.add_argument("word")
     download_parser.add_argument("dst", default=".", nargs="?")
     download_parser.set_defaults(logging="DEBUG", func=downloading)

@@ -17,7 +17,7 @@ class IInformation(Interface):
 
 
 class IDownloading(Interface):
-    def download(word):
+    def download(word, dst):
         pass
 
 

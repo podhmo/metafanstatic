@@ -2,21 +2,38 @@
 import logging
 logger = logging.getLogger(__name__)
 from zope.interface import implementer
+import requests
 import zipfile
 import os.path
 from .interfaces import IDownloading, ICachedRequesting, ICache
 from .decorator import reify
 from .control import GithubAPIControl
-from .cache import CachedStreamRequesting, JSONFileCache
+from .cache import CachedStreamRequesting, JSONFileCache, _FileStreamAdapter
+
+class NotZipFile(Exception):
+    pass
 
 
 def zip_extracting(zippath, dst):
     if not zipfile.is_zipfile(zippath):
-        raise Exception("not zipfile {}".format(zippath))
+        raise NotZipFile(zippath)
     zf = zipfile.ZipFile(zippath)
     zf.extractall(dst)
     toplevel = os.path.split(zf.namelist()[0])[0]
     return os.path.join(dst, toplevel)
+
+
+@implementer(IDownloading)
+class RawDownloading(object):
+    def __init__(self, app):
+        self.app = app
+
+    def download(self, url, dst):
+        logger.info("loading: %s", url)
+        filestream = _FileStreamAdapter(url, requests.get(url, stream=True))
+        with open(os.path.join(dst, filestream.name), "wb") as wf:
+            for chunk in filestream:
+                wf.write(chunk)
 
 
 @implementer(IDownloading)
@@ -39,7 +56,7 @@ class GithubDownloading(object):
         return self.app.registry.getUtility(ICache, name=self.workdir_name)
 
     def zip_download(self, word, version):
-        k = "@".join((word, repr(version)))
+        k = "@".join((word, str(version)))
         try:
             val = self.download_requesting.cache[k]
             return val
@@ -47,13 +64,17 @@ class GithubDownloading(object):
             fullname = self.information.fullname(word)
             return self.download_requesting.get(k, self.control.on_download(fullname, version))
 
-    def download(self, word, version, dst):
-        k = "@".join((word, repr(version)))
+    def download(self, word, dst, version=None):
+        k = "@".join((word, str(version)))
         try:
             return self.workdir_cache[k]
         except KeyError:
             zip_path = self.zip_download(word, version)
-            return self.extracting(zip_path, dst)
+            try:
+                return self.extracting(zip_path, dst)
+            except NotZipFile:
+                self.download_requesting.clear(k)
+                raise
 
 
 def includeme(config):

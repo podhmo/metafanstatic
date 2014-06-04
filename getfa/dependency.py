@@ -47,7 +47,7 @@ class get_dependency(object):
     @dispatchmethod
     def URLRequest(self, name, url):
         return {"name": name,
-                "url": url,
+                "rawurl": url,
                 "version": None,
                 "main": os.path.basename(url)}
 
