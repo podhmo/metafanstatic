@@ -12,6 +12,9 @@ class IInformation(Interface):
     def versions(word):
         pass
 
+    def dependency(word):
+        pass
+
 
 class IDownloading(Interface):
     def download(word):

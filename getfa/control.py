@@ -32,5 +32,13 @@ class GithubAPIControl(object):
         else:
             return "https://github.com/{name}/archive/{version}.zip".format(name=fullname, version=version)
 
+    def on_tags(self, fullname, version):
+        fmt = "https://api.github.com/repos/{name}/git/trees/{sha}"
+        return fmt.format(name=fullname, sha=version)
+
+    def on_rawfile(self, fullname, version, filepath):
+        fmt = "https://raw.githubusercontent.com/{name}/{version}/{filepath}"
+        return fmt.format(name=fullname, version=version, filepath=filepath)
+
     def fullname_of_url(self, url):
         return get_repository_fullname_from_url(url)

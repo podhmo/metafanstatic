@@ -16,7 +16,8 @@ except IOError:
 install_requires=[
     'setuptools',
     'requests',
-    'node-semver'
+    'node-semver',
+    'miniadt'
     ]
 
 docs_extras = [

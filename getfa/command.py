@@ -1,12 +1,20 @@
 # -*- coding:utf-8 -*-
-import logging
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 import argparse
 import sys
+import pprint
+from configless import Configurator
 from .information import GithubInformation
 from .downloading import GithubDownloading
-from configless import Configurator
+from .detector import GithubDetector
+from .classifier import GithubClassifier
+from .dependency import GithubDependencyCollector
+import logging
+logger = logging.getLogger(__name__)
+from semver import logger as semver_logger
+semver_logger.propagate = False
+from requests.packages.urllib3.connectionpool import log as requests_logger
+requests_logger.propagate = False
+logging.basicConfig(level=logging.DEBUG)
 
 
 def get_app(args):
@@ -20,14 +28,14 @@ def versions(args):
     app = get_app(args)
     information = GithubInformation(app)
     for val in information.version(args.word):
-        # print(val["zipball_url"])
         print(val["name"])
+
 
 def searching(args):
     app = get_app(args)
     information = GithubInformation(app)
     for val in information.search(args.word):
-        print(val)
+        print("{val[name]} {val[url]}".format(val=val))
 
 
 def downloading(args):
@@ -35,6 +43,20 @@ def downloading(args):
     information = GithubInformation(app)
     downloading = GithubDownloading(app, information)
     print(downloading.download(args.word, args.version, args.dst))
+
+
+def dependency(args):
+    app = get_app(args)
+    information = GithubInformation(app)
+    detector = GithubDetector(app)
+    classifier = GithubClassifier(app)
+    dependency = GithubDependencyCollector(app, information, detector, classifier)
+
+    if not args.recursive:
+        result = dependency.one_dependency(args.word, args.version)
+    else:
+        result = dependency.recursive_dependency(args.word, args.version)
+    pprint.pprint(result)
 
 
 def clear(args):
@@ -67,6 +89,13 @@ def main(sys_args=sys.argv):
     clear_parser = sub_parsers.add_parser("clear")
     clear_parser.add_argument("word", nargs="?")
     clear_parser.set_defaults(logging="DEBUG", func=clear)
+
+    dependency_parser = sub_parsers.add_parser("dependency")
+    dependency_parser.add_argument("word")
+    dependency_parser.add_argument("--local", action="store_true", default=False)
+    dependency_parser.add_argument("--recursive", "-r", action="store_true", default=False)
+    dependency_parser.add_argument("--version", "-v", default="")
+    dependency_parser.set_defaults(logging="DEBUG", func=dependency)
 
     download_parser = sub_parsers.add_parser("download")
     download_parser.add_argument("--version", default=None)
