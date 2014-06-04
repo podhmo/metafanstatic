@@ -4,6 +4,11 @@ logger = logging.getLogger(__name__)
 import json
 import os.path
 import time
+import requests
+from zope.interface import implementer
+from .interfaces import ICachedRequesting, ICache
+from .decorator import reify
+
 
 class ConflictCacheException(Exception):
     pass
@@ -22,7 +27,7 @@ class JSONCacheBase(object):
     @classmethod
     def clear(cls, storepath, cachepath, word):
         data = cls.load(storepath, cachepath)
-        del data.cache[word]
+        data.cache.pop(word, None)
         data.save()
 
     @classmethod
@@ -44,6 +49,7 @@ class JSONCacheBase(object):
             wf.write(json.dumps(self.cache))
 
 
+@implementer(ICache)
 class JSONDictCache(JSONCacheBase):
     def __init__(self, storepath, cachepath, cache, check=True, overwrite=True):
         self.storepath = storepath
@@ -62,6 +68,7 @@ class JSONDictCache(JSONCacheBase):
         return self.cache[k]
 
 
+@implementer(ICache)
 class JSONFileCache(JSONCacheBase):
     def __init__(self, storepath, cachepath, cache, check=True, overwrite=True):
         self.storepath = storepath
@@ -73,6 +80,7 @@ class JSONFileCache(JSONCacheBase):
 
     def store_stream(self, k, filestream):
         path = os.path.join(self.storepath, filestream.name)
+
         if not self.overwrite and os.path.exists(path):
             raise ConflictCacheException(path)
 
@@ -113,3 +121,95 @@ class TimelimitWrapper(object):
 
     def store(self, k, val):
         self.cache.store(k, (time.time(), val))
+
+
+@implementer(ICachedRequesting)
+class CachedRequesting(object):
+    def __init__(self, cachedir, cachename, cacheclass=JSONDictCache, timelimit=None):
+        self.cachedir = cachedir
+        self.cachename = cachename
+        self.cacheclass = cacheclass
+        self.timelimit = timelimit
+
+    @reify
+    def cache_path(self):
+        return os.path.join(self.cachedir, "cache.{}.json".format(self.cachename))
+
+    @reify
+    def cache(self):
+        if self.timelimit:
+            return TimelimitWrapper(self.cacheclass.load(self.cachedir, self.cache_path), self.timelimit)
+        else:
+            return self.cacheclass.load(self.cachedir, self.cache_path)
+
+    def clear(self, word):
+        logger.info("clear: word=%s", word)
+        return self.cacheclass.clear(self.cachedir, self.cache_path, word)
+
+    def clear_all(self):
+        logger.info("clear all: %s", self.cache_path)
+        return self.cacheclass.clear_all(self.cachedir, self.cache_path)
+
+    def get(self, word, url):
+        logger.info("loading: word=%s, %s", word, url)
+        try:
+            return self.cache[word]
+        except KeyError:
+            response = requests.get(url).json()
+            self.cache.store(word, response)
+            return response
+
+
+@implementer(ICachedRequesting)
+class CachedStreamRequesting(object):
+    def __init__(self, cachedir, cachename, cacheclass=JSONFileCache, timelimit=None):
+        self.cachedir = cachedir
+        self.cachename = cachename
+        self.cacheclass = cacheclass
+        self.timelimit = timelimit
+
+    @reify
+    def cache_path(self):
+        return os.path.join(self.cachedir, "cache.{}.json".format(self.cachename))
+
+    @reify
+    def cache(self):
+        if self.timelimit:
+            return TimelimitWrapper(self.cacheclass.load(self.cachedir, self.cache_path), self.timelimit)
+        else:
+            return self.cacheclass.load(self.cachedir, self.cache_path)
+
+    def clear(self, word):
+        logger.info("clear: word=%s", word)
+        return self.cacheclass.clear(self.cachedir, self.cache_path, word)
+
+    def clear_all(self):
+        logger.info("clear all: %s", self.cache_path)
+        return self.cacheclass.clear_all(self.cachedir, self.cache_path)
+
+    def get(self, word, url):
+        logger.info("loading: word=%s, %s", word, url)
+        try:
+            return self.cache[word]
+        except KeyError:
+            response = requests.get(url, stream=True)
+            return self.cache.store_stream(word, _FileStreamAdapter(url, response))
+
+
+class _FileStreamAdapter(object):
+    def __init__(self, url, requests_stream, chunk_size=8 * 1024):
+        self.url = url
+        self.requests_stream = requests_stream
+        self.chunk_size = chunk_size
+        self.stream = None
+
+    @property
+    def name(self):
+        disposition = self.requests_stream.headers.get("content-disposition")
+        if disposition:
+            return disposition.split("=")[1]
+        else:
+            return os.path.basename(self.url)
+
+    def __iter__(self):
+        return self.requests_stream.iter_content(chunk_size=self.chunk_size)

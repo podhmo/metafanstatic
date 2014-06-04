@@ -13,6 +13,11 @@ class IInformation(Interface):
         pass
 
 
+class IDownloading(Interface):
+    def download(word):
+        pass
+
+
 class ICachedRequesting(Interface):
     def get(word, url):
         pass
