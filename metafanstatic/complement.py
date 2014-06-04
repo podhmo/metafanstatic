@@ -67,7 +67,7 @@ def dependencies_iterator(xs):
             yield k, v
     else:
         for e in xs:
-            yield k, None
+            yield e, None
 
 
 class TotalComplement(object):
