@@ -10,7 +10,7 @@ import os.path
 @implementer(IScaffoldTemplate)
 class Package(object):
 
-    """fanstatic template for genfa"""
+    """fanstatic template for metafanstatic"""
     source_directory = os.path.join(os.path.abspath(os.path.dirname(__file__)), "+package+")
     # varname -> description, default
     expected_words = {

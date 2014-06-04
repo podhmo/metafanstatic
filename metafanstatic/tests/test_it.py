@@ -53,9 +53,9 @@ file_structure = {
 file_structure_from_dict(here, file_structure)
 
 
-from genfa.complement import TotalComplement
+from metafanstatic.complement import TotalComplement
 from configless import Configurator
-from genfa.generating import Generating
+from metafanstatic.generating import Generating
 
 params = {
     "jquery": {

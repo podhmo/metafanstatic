@@ -26,14 +26,14 @@ def get_walker(config, input):
 
 def get_scaffold(config):
     getter = config.activate_plugin("scaffoldgetter")
-    scaffold = getter.get_scaffold("genfa")
+    scaffold = getter.get_scaffold("metafanstatic")
     return scaffold
 
 
 class Generating(object):
     def __init__(self, config):
         self.config = config
-        self.config.include("genfa.generating")
+        self.config.include("metafanstatic.generating")
 
     @reify
     def input(self):

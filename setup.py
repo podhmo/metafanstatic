@@ -70,7 +70,6 @@ setup(name='metafanstatic',
       [console_scripts]
       metafanstatic = metafanstatic.command:main
       getfa = getfa.command:main
-      genfa = genfa.command:main
       [korpokkur.scaffold]
       metafanstatic = metafanstatic.scaffolds:Package
       genfa = genfa.scaffolds:Package

@@ -30,7 +30,7 @@ file_structure_from_dict(here, file_structure)
 
 
 def _getTarget():
-    from genfa.loading import Loader
+    from metafanstatic.loading import Loader
     return Loader
 
 

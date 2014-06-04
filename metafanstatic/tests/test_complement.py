@@ -19,7 +19,7 @@ _data = {
 
 
 def _getTarget():
-    from genfa.complement import TotalComplement
+    from metafanstatic.complement import TotalComplement
     return TotalComplement
 
 
