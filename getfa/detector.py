@@ -16,6 +16,12 @@ class GithubDetector(object):
         versions = [d["name"] for d in information.version(word)]
         return max_satisfying(versions, restriction, loose=True)
 
+    def anything_json_path(self, taglist):
+        try:
+            return self.bower_json_path(taglist)
+        except NotFound:
+            return self.component_json_path(taglist)
+
     def bower_json_path(self, taglist):
         for line in taglist["tree"]:
             if line["path"] == "bower.json":

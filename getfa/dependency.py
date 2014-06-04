@@ -16,7 +16,7 @@ class GithubDependencyCollector(object):
     def one_dependency(self, word, restriction=""):
         version = self.detector.choose_version(self.information, word, restriction)
         taglist = self.information.remote_files(word, version)
-        result = self.information.rawfile(word, version, self.detector.bower_json_path(taglist))
+        result = self.information.rawfile(word, version, self.detector.anything_json_path(taglist))
         return result
 
     def recursive_dependency(self, word, restriction=""):
