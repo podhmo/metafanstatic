@@ -1,0 +1,10 @@
+{
+  "dependencies": [], 
+  "version": "", 
+  "name": "zepto", 
+  "main": [
+    "dist/zepto.min.js"
+  ], 
+  "bower_directory": "zepto", 
+  "description": ""
+}

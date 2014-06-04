@@ -19,7 +19,6 @@ install_requires=[
     'fanstatic', 
     "korpokkur", 
     "node-semver", 
-    'requests',
     'miniadt'
     ]
 
@@ -46,7 +45,7 @@ class PyTest(TestCommand):
 
 setup(name='metafanstatic',
       version='0.1',
-      description='get fanstatic package source',
+      description='generate fanstatic package',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Programming Language :: Python",
@@ -71,8 +70,10 @@ setup(name='metafanstatic',
       [console_scripts]
       metafanstatic = metafanstatic.command:main
       getfa = getfa.command:main
+      genfa = genfa.command:main
       [korpokkur.scaffold]
       metafanstatic = metafanstatic.scaffolds:Package
+      genfa = genfa.scaffolds:Package
       """
       )
 
