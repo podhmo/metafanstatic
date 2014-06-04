@@ -23,6 +23,9 @@ class GithubAPIControl(object):
     def on_lookup(self, word=""):
         return "https://bower.herokuapp.com/packages/{}".format(word)
 
+    def on_search(self, word=""):
+        return "https://bower.herokuapp.com/packages/search/{}".format(word)
+
     def on_download(self, fullname, version=None):
         if version is None:
             return "https://github.com/{name}/archive/master.zip".format(name=fullname)

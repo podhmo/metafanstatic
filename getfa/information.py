@@ -12,6 +12,7 @@ from .cache import CachedRequesting
 class GithubInformation(object):
     version_name = "github.version"
     lookup_name = "heroku.lookup"
+    search_name = "heroku.search"
 
     def __init__(self, app, control=GithubAPIControl()):
         self.app = app
@@ -24,6 +25,13 @@ class GithubInformation(object):
     @reify
     def version_requesting(self):
         return self.app.registry.getUtility(ICachedRequesting, name=self.version_name)
+
+    @reify
+    def search_requesting(self):
+        return self.app.registry.getUtility(ICachedRequesting, name=self.search_name)
+
+    def search(self, word):
+        return self.search_requesting.get(word, self.control.on_search(word))
 
     def lookup(self, word):
         return self.lookup_requesting.get(word, self.control.on_lookup(word))
@@ -51,3 +59,6 @@ def includeme(config):
     u(CachedRequesting(cachedir, name, timelimit=60 * 5), ICachedRequesting, name=name)
     name = GithubInformation.version_name
     u(CachedRequesting(cachedir, name, timelimit=60 * 5), ICachedRequesting, name=name)
+
+    name = GithubInformation.search_name
+    u(CachedRequesting(cachedir, name, timelimit=60), ICachedRequesting, name=name)

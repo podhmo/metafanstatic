@@ -23,6 +23,12 @@ def versions(args):
         # print(val["zipball_url"])
         print(val["name"])
 
+def searching(args):
+    app = get_app(args)
+    information = GithubInformation(app)
+    for val in information.search(args.word):
+        print(val)
+
 
 def downloading(args):
     app = get_app(args)
@@ -53,6 +59,10 @@ def main(sys_args=sys.argv):
     version_parser = sub_parsers.add_parser("version")
     version_parser.add_argument("word")
     version_parser.set_defaults(logging="DEBUG", func=versions)
+
+    search_parser = sub_parsers.add_parser("search")
+    search_parser.add_argument("word")
+    search_parser.set_defaults(logging="DEBUG", func=searching)
 
     clear_parser = sub_parsers.add_parser("clear")
     clear_parser.add_argument("word", nargs="?")
