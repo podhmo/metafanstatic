@@ -74,7 +74,7 @@ def downloading_from_config(args):
 
     for name, data in params.items():
         if "rawurl" in data:
-            print(raw_downloading.download(data["rawurl"], args.dst))
+            print(raw_downloading.download(data["rawurl"], args.dst, name=data["name"]))
         else:
             try:
                 print(github_downloading.download(data["name"], args.dst, data["version"]))

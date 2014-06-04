@@ -25,13 +25,12 @@ def zip_extracting(zippath, dst):
     return os.path.join(dst, toplevel)
 
 
-def fake_bower_package(filename, dst):
-    dirname = os.path.splitext(filename)[0]
+def fake_bower_package(dirname, filename, dst):
     dirpath = os.path.join(dst, dirname)
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
     params = {
-        "name": os.path.basename(filename),
+        "name": dirname,
         "version": "",
         "main": [filename]
     }
@@ -45,10 +44,10 @@ class RawDownloading(object):
     def __init__(self, app):
         self.app = app
 
-    def download(self, url, dst):
+    def download(self, url, dst, name=None):
         logger.info("loading: %s", url)
         filestream = _FileStreamAdapter(url, requests.get(url, stream=True))
-        dirpath = fake_bower_package(filestream.name, dst)
+        dirpath = fake_bower_package((name or filestream.name), filestream.name, dst)
         with open(os.path.join(dirpath, filestream.name), "wb") as wf:
             for chunk in filestream:
                 wf.write(chunk)
