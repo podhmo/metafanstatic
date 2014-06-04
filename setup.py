@@ -19,21 +19,34 @@ install_requires=[
     'fanstatic', 
     "korpokkur", 
     "node-semver", 
+    'requests',
+    'miniadt'
     ]
 
 docs_extras = [
     ]
 
-tests_require = [
-    "nose"
-    ]
-
+tests_require =[
+    "pytest"
+]
 testing_extras = tests_require + [
     ]
 
+from setuptools.command.test import test as TestCommand
+
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+    def run_tests(self):
+        import pytest
+        pytest.main(self.test_args)
+
+
 setup(name='metafanstatic',
-      version='0.0',
-      description='fanstatic package generator',
+      version='0.1',
+      description='get fanstatic package source',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Programming Language :: Python",
@@ -52,10 +65,12 @@ setup(name='metafanstatic',
           'docs':docs_extras,
           },
       tests_require = tests_require,
-      test_suite='nose.collector',
+      entry_points = """
+      cmdclass = {'test': PyTest},
       entry_points = """
       [console_scripts]
       metafanstatic = metafanstatic.command:main
+      getfa = getfa.command:main
       [korpokkur.scaffold]
       metafanstatic = metafanstatic.scaffolds:Package
       """
