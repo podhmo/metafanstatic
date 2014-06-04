@@ -36,8 +36,9 @@ def scanning(args):
                 return data
 
     for f in args.files:
-        name = os.path.basename(f)
-        result[name] = load(f)
+        params = load(f)
+        name = params["name"]
+        result[name] = params
     out(json.dumps(result, indent=2, ensure_ascii=False))
 
 
@@ -59,8 +60,8 @@ def creation(args):
 
 def get_app(args):
     config = Configurator({"cachedir": args.cachedir})
-    config.include("getfa.information")
-    config.include("getfa.downloading")
+    config.include("metafanstatic.information")
+    config.include("metafanstatic.downloading")
     return config
 
 
@@ -168,7 +169,7 @@ def main(sys_args=sys.argv):
     create_parser.add_argument("dst")
     create_parser.set_defaults(logging="DEBUG", func=creation)
 
-    # getfa
+    # metafanstatic
 
     version_parser = sub_parsers.add_parser("version")
     version_parser.add_argument("word")
