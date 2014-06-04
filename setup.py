@@ -60,19 +60,16 @@ setup(name='metafanstatic',
       zip_safe=False,
       install_requires = install_requires,
       extras_require = {
-          'testing':testing_extras,
-          'docs':docs_extras,
+          'testing': testing_extras,
+          'docs': docs_extras,
           },
       tests_require = tests_require,
-      entry_points = """
       cmdclass = {'test': PyTest},
       entry_points = """
       [console_scripts]
       metafanstatic = metafanstatic.command:main
-      getfa = getfa.command:main
       [korpokkur.scaffold]
       metafanstatic = metafanstatic.scaffolds:Package
-      genfa = genfa.scaffolds:Package
       """
       )
 
