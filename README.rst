@@ -29,3 +29,15 @@ after above instraction
     bootstrap-timepicker-0.2.6      meta.js.autotype
     config.json                     meta.js.bootstrap
 
+after install package
+
+.. code:: bash
+
+    # for i in meta.*; do popd $i; python setup.py develop; popd; done
+    $ metafanstatic list
+    from js.autotype import jquery_autotype_js; jquery_autotype_js.need()
+    from js.bootstrap import bootstrap_css; bootstrap_css.need()
+    from js.bootstrap import bootstrap_js; bootstrap_js.need()
+    from js.bootstrap_timepicker import bootstrap_timepicker_min_css; bootstrap_timepicker_min_css.need()
+    from js.bootstrap_timepicker import bootstrap_timepicker_min_js; bootstrap_timepicker_min_js.need()
+    from js.jquery import jquery_js; jquery_js.need()

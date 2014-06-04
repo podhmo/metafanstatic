@@ -149,6 +149,21 @@ def clear(args):
             requesting.clear_all()
 
 
+def listing(args):
+    def import_symbol(symbol):
+        return pkg_resources.EntryPoint.parse("x=%s" % symbol).load(False)
+
+    import pkg_resources
+    from fanstatic import Resource
+    for d in pkg_resources.working_set:
+        for v, val in d.get_entry_map('fanstatic.libraries').items():
+            module_name = val.module_name
+            m = import_symbol(module_name)
+            for name, ob in m.__dict__.items():
+                if isinstance(ob, Resource):
+                    print("from {module} import {name}; {name}.need()".format(module=val.module_name, name=name))
+
+
 def main(sys_args=sys.argv):
     parser = argparse.ArgumentParser()
     parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
@@ -159,17 +174,18 @@ def main(sys_args=sys.argv):
     #  genfa
 
     scan_parser = sub_parsers.add_parser("scan")
-    scan_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     scan_parser.add_argument("files", nargs="+")
     scan_parser.set_defaults(logging="DEBUG", func=scanning)
 
     create_parser = sub_parsers.add_parser("create")
-    create_parser.add_argument("--logging", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     create_parser.add_argument("config")
     create_parser.add_argument("dst")
     create_parser.set_defaults(logging="DEBUG", func=creation)
 
-    # metafanstatic
+    list_parser = sub_parsers.add_parser("list")
+    list_parser.set_defaults(logging="DEBUG", func=listing)
+
+    # getfa
 
     version_parser = sub_parsers.add_parser("version")
     version_parser.add_argument("word")
