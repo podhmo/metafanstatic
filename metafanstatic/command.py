@@ -87,11 +87,17 @@ def downloading(args):
     app = get_app(args)
     information = GithubInformation(app)
     downloading = GithubDownloading(app, information)
+    if args.version is None:
+        detector = GithubDetector(app)
+        version = detector.choose_version(information, args.word, restriction="")
+    else:
+        version = args.version
+
     try:
-        print(downloading.download(args.word, args.dst, args.version))
+        print(downloading.download(args.word, args.dst, version))
     except NotZipFile:
         detector = GithubDetector(app)
-        correct_version = detector.choose_version(information, args.word, args.version)
+        correct_version = detector.choose_version(information, args.word, version)
         print(downloading.download(args.word, args.dst, correct_version))
 
 
@@ -207,7 +213,7 @@ def main(sys_args=sys.argv):
     dependency_parser.set_defaults(logging="DEBUG", func=dependency)
 
     download_parser = sub_parsers.add_parser("download")
-    download_parser.add_argument("--version", default=None)
+    download_parser.add_argument("--version", "-v", default=None)
     download_parser.add_argument("--config", default=None)
     download_parser.add_argument("--url", default=None)
     download_parser.add_argument("word", default=None, nargs="?")
