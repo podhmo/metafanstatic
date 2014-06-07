@@ -57,7 +57,7 @@ class Loader(object):
                  finder=find_target_from_candidates,
                  loader=load_from_file,
                  packer=pack_from_jsondict,
-                 targets=["bower.json", "complement.json"]):
+                 targets=["bower.json", "component.json"]):
         self.finder = finder
         self.loader = loader
         self.targets = targets
