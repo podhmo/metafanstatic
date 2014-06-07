@@ -55,7 +55,16 @@ def creation(args):
 
     generating = Generating(config)
     for c in params["total"]["pro"]:
-        generating.generate(params[c], args.dst)
+        if "skip" not in params[c]:
+            sys.stderr.write("create package: {}? (y or n)\n".format(c))
+            sys.stderr.flush()
+            skip = "y" == sys.stdin.readline().strip().lower()
+        else:
+            skip = params[c]["skip"]
+        if skip:
+            sys.stderr.write("skipped: {}\n".format(c))
+        else:
+            generating.generate(params[c], args.dst)
 
 
 def get_app(args):
