@@ -58,7 +58,7 @@ def creation(args):
         if "skip" not in params[c]:
             sys.stderr.write("create package: {}? (y or n)\n".format(c))
             sys.stderr.flush()
-            skip = "y" == sys.stdin.readline().strip().lower()
+            skip = "y" != sys.stdin.readline().strip().lower()
         else:
             skip = params[c]["skip"]
         if skip:
